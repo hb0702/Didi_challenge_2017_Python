@@ -33,3 +33,26 @@ Top teams required to submit identity verification documents and runnable code. 
 #### Jul 12 — Final Award Ceremony
 
 Top 5 teams present their solutions to a panel of Udacity and DiDi executives and have chance to run their code on Udacity’s self-driving car
+
+### How to setup development environment with Qt
+* Go to catkin workspace
+
+        $cd ~/catkin_ws/src
+
+* Download kor_didi_pkg source
+* Move the original file of catkin_ws/src/CMakeLists.txt (should be /opt/ros/indigo/share/catkin/cmake/toplevel.cmake) to catkin_ws/src/, and change the file name to CMakeLists.txt
+* Set Qt Creator permission - add following to ~/.bashrc
+
+        sudo -s chmod o+w /home/parkjaeil0108/.config/QtProject/qtcreator/*.xml
+        sudo chown -R $USER:$USER /home/parkjaeil0108/.config/QtProject/
+        sudo -s chmod o+w /home/parkjaeil0108/catkin_ws/src/kor_didi_pkg/*.*
+
+* Open Qt Creator
+
+        $qtcreator
+
+* Open catkin_ws/src/CMakeLists.txt on Qt Creator, set build directory to ~/catkin_ws/build
+* If you have 'ImportError: No module named catkin.environment_cache'..
+
+	
+        $source /opt/ros/indigo/setup.bash
