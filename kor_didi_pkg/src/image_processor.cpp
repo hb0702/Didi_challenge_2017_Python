@@ -1,8 +1,9 @@
-#include "ros/ros.h"
-#include "std_msgs/String.h"
+#include <ros/ros.h>
+#include <sensor_msgs/Image.h>
 
-void processImage(const std_msgs::String::ConstPtr& msg)
+void processImage(const sensor_msgs::Image::ConstPtr& msg)
 {
+    ROS_INFO("Got image");
 //    ROS_INFO("I heard: [%s]", msg->data.c_str());
 }
 

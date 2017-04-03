@@ -56,3 +56,13 @@ Top 5 teams present their solutions to a panel of Udacity and DiDi executives an
 
 	
         $source /opt/ros/indigo/setup.bash
+
+### How to run kor_didi_pkg
+* Go to catkin workspace
+
+        $cd ~/catkin_ws/src
+
+* Download kor_didi_pkg source
+* Run kor_didi_run.sh with .bag file path
+
+        $sh '/home/parkjaeil0108/catkin_ws/src/kor_didi_run.sh' '/home/parkjaeil0108/challenge/Didi-Training-Release-1/approach_1.bag'

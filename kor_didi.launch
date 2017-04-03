@@ -1,0 +1,9 @@
+<launch>
+  <!-- declare arg to be passed in -->
+  <arg name="bag_file_path" />
+
+  <node name="bag_publisher" pkg="kor_didi_pkg" type="bag_publisher" args="$(arg bag_file_path)" respawn="false" output="screen" required="false"/>
+  <node name="image_processor" pkg="kor_didi_pkg" type="image_processor" respawn="false" output="screen" cwd="ROS_HOME" required="false" />
+  <node name="kf_localizer" pkg="kor_didi_pkg" type="kf_localizer" respawn="false" output="screen" cwd="ROS_HOME" required="false" >
+  </node>
+</launch>
