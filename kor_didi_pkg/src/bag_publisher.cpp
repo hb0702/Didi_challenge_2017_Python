@@ -11,8 +11,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "publish_scene");
 
-    std::string fileName(argv[0]);
-
+    std::string fileName(argv[1]);
     ros::NodeHandle n;
 
     ros::Publisher lidarPublisher = n.advertise<sensor_msgs::PointCloud2>("scene/lidar_points", 1);

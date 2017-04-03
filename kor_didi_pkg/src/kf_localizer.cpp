@@ -1,8 +1,9 @@
-#include "ros/ros.h"
-#include "std_msgs/String.h"
+#include <ros/ros.h>
+#include <sensor_msgs/PointCloud2.h>
 
-void processLidarPoints(const std_msgs::String::ConstPtr& msg)
+void processLidarPoints(const sensor_msgs::PointCloud2::ConstPtr& msg)
 {
+    ROS_INFO("Got points");
 //    ROS_INFO("I heard: [%s]", msg->data.c_str());
 }
 
