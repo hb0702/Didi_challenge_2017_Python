@@ -63,6 +63,10 @@ Top 5 teams present their solutions to a panel of Udacity and DiDi executives an
         $cd ~/catkin_ws/src
 
 * Download kor_didi_pkg source
+* Build
+
+        $catkin_make
+
 * Run kor_didi_run.sh with .bag file path
 
         $sh '/home/parkjaeil0108/catkin_ws/src/kor_didi_run.sh' '/home/parkjaeil0108/challenge/Didi-Training-Release-1/approach_1.bag'
