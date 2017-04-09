@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   rosbag
   cv_bridge
+  pcl_ros
 )
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -44,6 +45,7 @@ catkin_package(
     std_msgs
     rosbag
     cv_bridge
+    pcl_ros
   DEPENDS
     system_lib
 )
