@@ -2,7 +2,7 @@
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 #include <sensor_msgs/Image.h>
-#include <sensor_msgs/PointCloud2.h>
+#include <velodyne_msgs/VelodyneScan.h>
 #include "std_msgs/String.h"
 #include <boost/foreach.hpp>
 #include <ros/package.h>
@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     std::string fileName(argv[1]);
     ros::NodeHandle n;
 
-    ros::Publisher lidarPublisher = n.advertise<sensor_msgs::PointCloud2>("scene/lidar_points", 1);
+    ros::Publisher lidarPublisher = n.advertise<velodyne_msgs::VelodyneScan>("/velodyne_packets", 1);
     ros::Publisher imagePublisher = n.advertise<sensor_msgs::Image>("scene/image", 1);
     ros::Rate loop_rate(10);
 
@@ -24,11 +24,11 @@ int main(int argc, char **argv)
         bag.open(fileName, rosbag::bagmode::Read);
 
         std::string bagImageTopic = "/image_raw";
-        std::string bagLidarPointTopic = "/velodyne_points";
+        std::string bagLidarTopic = "/velodyne_packets";
 
         std::vector<std::string> topics;
         topics.push_back(bagImageTopic);
-        topics.push_back(bagLidarPointTopic);
+        topics.push_back(bagLidarTopic);
 
         rosbag::View view(bag, rosbag::TopicQuery(topics));
 
@@ -41,9 +41,9 @@ int main(int argc, char **argv)
                     imagePublisher.publish(*imagePtr);
             }
 
-            if (m.getTopic() == bagLidarPointTopic)
+            if (m.getTopic() == bagLidarTopic)
             {
-                sensor_msgs::PointCloud2::ConstPtr lidarPointPtr = m.instantiate<sensor_msgs::PointCloud2>();
+                velodyne_msgs::VelodyneScan::ConstPtr lidarPointPtr = m.instantiate<velodyne_msgs::VelodyneScan>();
                 if (lidarPointPtr != NULL)
                     lidarPublisher.publish(*lidarPointPtr);
             }
