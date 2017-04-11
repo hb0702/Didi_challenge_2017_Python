@@ -1,0 +1,52 @@
+""" MODEL TASK
+2. We need to build the model. There are 3 sub-tasks:
+a. Write a function to convert 3d lidar points to 2d representation front view
+b. Write a fully convolutional network in which the input is 2d representation
+    of lidar and output are two grids which have the same size as original input. 
+    One is used for classification (similar to segmentation problem) 
+    other is used to regression the dimension of bounding boxes.
+c. Write a loss function which combines classification and regression losses
+"""
+
+# a. Write a function to convert 3d lidar points to 2d representation front view
+
+# load raw array (3D Point Map)
+
+import numpy as np
+
+raw = (        ) #input
+arr_3D = [0:2]#input array
+x = arr_3D[0]
+y = arr_3D[1]
+z = arr_3D[2] 
+distance = raw[3] # ???
+
+# Check and Visualize 3D Point Cloud
+
+from mayavi import mlab
+
+mlab.mesh(x, y, z, colormap='gist_earth')
+
+# Project from 3D to 2D
+
+theta = np.arctan2(y, x)
+pie = np.arcsin(z / np.sqrt(np.sum(np.power(x, y, z))))
+
+""" Why is it needed?
+delta_pie = #Average horizontal angle
+delta_theta = #Average vertical angle
+r = [ theta / delta_theta ]
+c = [ pie / delta_pie ]
+"""
+
+d = np.sqrt(np.sum(np.power(x, y)))
+z = z
+
+arr_2D = (d, z)
+
+# Check and Visualize 2D Projection
+
+import matplotlib.pyplot as plt
+
+plt.imshow(arr_2D)
+
