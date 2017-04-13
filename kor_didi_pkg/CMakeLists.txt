@@ -6,6 +6,7 @@ project(kor_didi_pkg)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  rospy
   std_msgs
   rosbag
   cv_bridge
@@ -42,6 +43,7 @@ catkin_package(
 #  LIBRARIES kor_didi_pkg
   CATKIN_DEPENDS
     roscpp
+    rospy
     std_msgs
     rosbag
     cv_bridge
@@ -69,11 +71,13 @@ include_directories(
 add_executable(bag_publisher src/bag_publisher.cpp)
 add_executable(image_processor src/image_processor.cpp)
 add_executable(kf_localizer src/kf_localizer.cpp)
+add_executable(kitti_processor src/kitti_processor.cpp)
 
 #This will link executables to the appropriate libraries
 target_link_libraries(bag_publisher ${catkin_LIBRARIES})
 target_link_libraries(image_processor ${catkin_LIBRARIES})
 target_link_libraries(kf_localizer ${catkin_LIBRARIES})
+target_link_libraries(kitti_processor ${catkin_LIBRARIES})
 
 # set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 
@@ -82,4 +86,10 @@ target_link_libraries(kf_localizer ${catkin_LIBRARIES})
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+
+## Uncomment if the package has a setup.py
+catkin_python_setup()
+
+# catkin_install_python(PROGRAMS bin/py_processor DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
 
