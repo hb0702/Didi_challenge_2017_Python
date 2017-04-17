@@ -37,7 +37,7 @@ Top 5 teams present their solutions to a panel of Udacity and DiDi executives an
 ### How to setup development environment with Qt
 * Go to catkin workspace
 
-        $cd ~/catkin_ws/src
+        $ cd ~/catkin_ws/src
 
 * Download kor_didi_pkg source
 * Move the original file of catkin_ws/src/CMakeLists.txt (should be /opt/ros/indigo/share/catkin/cmake/toplevel.cmake) to catkin_ws/src/, and change the file name to CMakeLists.txt
@@ -49,24 +49,40 @@ Top 5 teams present their solutions to a panel of Udacity and DiDi executives an
 
 * Open Qt Creator
 
-        $qtcreator
+        $ qtcreator
 
 * Open catkin_ws/src/CMakeLists.txt on Qt Creator, set build directory to ~/catkin_ws/build
 * If you have 'ImportError: No module named catkin.environment_cache'..
 
 	
-        $source /opt/ros/indigo/setup.bash
+        $ source /opt/ros/indigo/setup.bash
 
 ### How to run kor_didi_pkg
 * Go to catkin workspace
 
-        $cd ~/catkin_ws/src
+        $ cd ~/catkin_ws/src
 
 * Download kor_didi_pkg source
 * Build
 
-        $catkin_make
+        $ catkin_make
 
 * Run kor_didi_run.sh with .bag file path
 
-        $sh '/home/parkjaeil0108/catkin_ws/src/kor_didi_run.sh' '/home/parkjaeil0108/challenge/Didi-Training-Release-1/approach_1.bag'
+        $ sh '/home/parkjaeil0108/catkin_ws/src/kor_didi_run.sh' '/home/parkjaeil0108/challenge/Didi-Training-Release-1/approach_1.bag'
+
+### How to extract points(.npy) from .bag file
+* Go to catkin workspace
+
+        $ cd ~/catkin_ws/src
+
+* Download kor_didi_pkg source
+* Build
+
+        $ catkin_make
+
+* Run extract_points.sh with .bag file path
+
+        $ sh '/home/parkjaeil0108/catkin_ws/src/extract_points.sh' '/home/parkjaeil0108/challenge/Didi-Training-Release-1/approach_1.bag'
+
+* In the directory .bag file located, (bag file name)/lidar folder will be created, and .npy files will be saved in it.
