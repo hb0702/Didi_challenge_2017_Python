@@ -10,7 +10,7 @@
          value="$(find velodyne_pointcloud)/params/32db.yaml"/>
   </include>
 
-  <node name="bag_publisher" pkg="kor_didi_pkg" type="bag_publisher"  respawn="false" output="screen" required="false"/>
+  <node name="bag_publisher" pkg="kor_didi_pkg" type="bag_publisher" args="$(arg bag_file_path)"  respawn="false" output="screen" required="true"/>
   <node name="point_extractor" pkg="kor_didi_pkg" type="point_extractor.py" args="$(arg bag_file_path)" respawn="false" output="screen" cwd="ROS_HOME" required="false" />
 
 </launch>
