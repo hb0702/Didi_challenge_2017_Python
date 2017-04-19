@@ -85,7 +85,7 @@ if __name__ == '__main__':
 	tracklet_file = '/home/minh/Documents/Online_courses/Didi_challenge/data/KITTI_data/2011_09_26/2011_09_26/tracklet_labels.xml'
 
 	num_frames=len(dataset.velo)
-	objects = read_objects(tracklet_file, num_frames)
+	objects = read_objects(tracklet_file, num_frames, findCarOnly=True)
 
 
 	if not os.path.exists('./extract_kiti'):

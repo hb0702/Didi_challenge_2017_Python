@@ -116,7 +116,7 @@ class Tracklet(object):
 #end: class Tracklet
 
 
-def parseXML(trackletFile):
+def parseXML(trackletFile, findCarOnly):
   r""" parse tracklet xml file and convert results to list of Tracklet objects
 
   :param trackletFile: name of a tracklet xml file
@@ -149,11 +149,20 @@ def parseXML(trackletFile):
       hasAmt = False
       frameIdx = None
       for info in trackletElem:
-        #print 'trackInfo:', info.tag
+        # print 'trackInfo:', info.tag
         if isFinished:
           raise ValueError('more info on element after finished!')
         if info.tag == 'objectType':
-          newTrack.objectType = info.text
+          if findCarOnly:
+            if info.text == "Car":
+              newTrack.objectType = info.text
+              print(info.text)
+            else:
+              print(info.text, "excluding from objects list")
+              skip_iter = True
+              break
+          elif findCarOnly == False:
+            newTrack.objectType=info.text
         elif info.tag == 'h':
           newTrack.size[0] = float(info.text)
         elif info.tag == 'w':
@@ -234,9 +243,12 @@ def parseXML(trackletFile):
           raise ValueError('unexpected tag in tracklets: {0}!'.format(info.tag))
       #end: for all fields in current tracklet
 
+      # skip to next iteration if objectType != "Car"
+      if skip_iter:
+        continue
       # some final consistency checks on new tracklet
-      if not isFinished:
-        warn('tracklet {0} was not finished!'.format(trackletIdx))
+      # if not isFinished:
+      #   warn('tracklet {0} was not finished!'.format(trackletIdx))
       if newTrack.nFrames is None:
         warn('tracklet {0} contains no information!'.format(trackletIdx))
       elif frameIdx != newTrack.nFrames:
