@@ -4,13 +4,13 @@ from kitti_data.pykitti.tracklet import parseXML, TRUNC_IN_IMAGE, TRUNC_TRUNCATE
 import numpy as np
 import math
 
-def read_objects(tracklet_file, num_frames):
+def read_objects(tracklet_file, num_frames, findCarOnly=True):
 
     objects = []  #grouped by frames
     for n in range(num_frames): objects.append([])
 
     # read tracklets from file
-    tracklets = parseXML(tracklet_file)
+    tracklets = parseXML(tracklet_file, findCarOnly)
     num = len(tracklets)
 
     for n in range(num):
