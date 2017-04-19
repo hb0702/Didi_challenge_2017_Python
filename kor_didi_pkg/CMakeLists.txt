@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   rosbag
   cv_bridge
   pcl_ros
+  velodyne_msgs
 )
 
 ## Uncomment this if the package has a setup.py. This macro ensures

@@ -63,6 +63,10 @@ Top 5 teams present their solutions to a panel of Udacity and DiDi executives an
         $ cd ~/catkin_ws/src
 
 * Download kor_didi_pkg source
+
+* Go to catkin workspacee
+
+        $ cd ~/catkin_ws
 * Build
 
         $ catkin_make
@@ -72,11 +76,16 @@ Top 5 teams present their solutions to a panel of Udacity and DiDi executives an
         $ sh '/home/parkjaeil0108/catkin_ws/src/kor_didi_run.sh' '/home/parkjaeil0108/challenge/Didi-Training-Release-1/approach_1.bag'
 
 ### How to extract points(.npy) from .bag file
-* Go to catkin workspace
+* Go to catkin workspace source
 
         $ cd ~/catkin_ws/src
 
-* Download kor_didi_pkg source
+* Download or git clone kor_didi_pkg source
+
+* Go to catkin workspacee
+
+        $ cd ~/catkin_ws
+        
 * Build
 
         $ catkin_make
