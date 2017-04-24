@@ -124,7 +124,16 @@ if __name__ == '__main__':
 
 	model.fit_generator(generator=train_batch_generator(list_of_lidar, list_of_gtbox, batch_size = 1, data_augmentation = False),
                         steps_per_epoch=1,
-                        epochs=300)
+                        epochs=2000)
+
+	model.save("saved_model/model.h5")
+
+	# model_json = model.to_json()
+	# with open("saved_model/model.json", "w") as json_file:
+	# 	json_file.write(model_json)
+	# 	# serialize weights to HDF5
+	# model.save_weights("saved_model/model.h5")
+	# print("Saved model to disk")
 
 	
 
