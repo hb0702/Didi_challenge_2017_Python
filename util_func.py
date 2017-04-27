@@ -104,7 +104,7 @@ def in_which_box(point, boxes):
 
 
 
-def cylindrical_projection_with_labels(lidar,
+def cylindrical_projection_for_training(lidar,
                                        gt_box3d,
                                        ver_fov = (-24.4, 2.),#(-24.9, 2.), 
                                        hor_fov = (-42.,42.), 
@@ -137,8 +137,6 @@ def cylindrical_projection_with_labels(lidar,
     x_view = np.int16(np.ceil((theta*180/np.pi - hor_fov[0])/h_res))
     y_view = np.int16(np.ceil((phi*180/np.pi + ver_fov[1])/v_res))
     
-    #x_max = int(np.ceil((hor_fov[1] - hor_fov[0])/h_res))
-    #y_max = int(np.ceil((ver_fov[1] - ver_fov[0])/v_res))
     x_max = 255
     y_max = 63
     
@@ -160,14 +158,114 @@ def cylindrical_projection_with_labels(lidar,
     box = np.zeros([y_max+1, x_max+1, 10],dtype=np.float32)
     box[y_view,x_view] = encode_boxes
     
-    # seg = np.zeros([y_max+1, x_max+1],dtype=np.float32)
-    # seg[y_view,x_view] = encode_boxes[:,0]
-    # seg = seg.reshape(y_max+1, x_max+1,1)
+    return view, box
+
+
+def cylindrical_projection_for_training_with_augmentation(lidar,
+															gt_box3d,
+															theta,
+															flip,
+															ver_fov = (-24.4, 2.),#(-24.9, 2.), 
+															hor_fov = [-42.,42.],
+															v_res = 0.42,
+															h_res = 0.33):
+    '''
+    lidar: a numpy array of shape N*D, D>=3
+    ver_fov : angle range of vertical projection in degree
+    hor_fov: angle range of horizantal projection in degree
+    v_res : vertical resolusion
+    h_res : horizontal resolution
+    d_max : maximun range distance
     
-    # reg = np.zeros([y_max+1, x_max+1, 7],dtype=np.float32)
-    # reg[y_view,x_view] = encode_boxes[:,1:]
+    return : cylindrical projection (or panorama view) of lidar
+    '''
+    
+    x = lidar[:,0]
+    y = lidar[:,1]
+    z = lidar[:,2]
+    d = np.sqrt(np.square(x)+np.square(y))
+    
+    hor_fov = [hor_fov[0]-theta, hor_fov[0]-theta]
+
+    theta = np.arctan2(-y, x)
+    phi = -np.arctan2(z, d)
+    
+    x_view = np.int16(np.ceil((theta*180/np.pi - hor_fov[0])/h_res))
+    y_view = np.int16(np.ceil((phi*180/np.pi + ver_fov[1])/v_res))
+    
+    x_max = 255
+    y_max = 63
+    
+    indices = np.logical_and( np.logical_and(x_view >= 0, x_view <= x_max), 
+                           np.logical_and(y_view >= 0, y_view <= y_max)  )
+    
+    x_view = x_view[indices]
+    y_view = y_view[indices]
+    z = z[indices]
+    d = d[indices]
+    d_z = [[d[i],z[i]] for i in range(len(d))]
+    
+    view = np.zeros([y_max+1, x_max+1, 2],dtype=np.float64)
+    view[y_view,x_view] = d_z
+    
+    new_gt_box3d = augmentation(theta, flip, gt_box3d)
+    encode_boxes = np.array([box_encoder(lidar[i], new_gt_box3d) for i in range(len(lidar))])
+    encode_boxes = encode_boxes[indices]
+    
+    box = np.zeros([y_max+1, x_max+1, 10],dtype=np.float32)
+    box[y_view,x_view] = encode_boxes
     
     return view, box
+
+def cylindrical_projection_for_test(lidar,
+                                       #gt_box3d,
+                                       ver_fov = (-24.4, 2.),#(-24.9, 2.), 
+                                       hor_fov = (-42.,42.), 
+                                       v_res = 0.42,
+                                       h_res = 0.33,
+                                       d_max = None):
+    '''
+    lidar: a numpy array of shape N*D, D>=3
+    ver_fov : angle range of vertical projection in degree
+    hor_fov: angle range of horizantal projection in degree
+    v_res : vertical resolusion
+    h_res : horizontal resolution
+    d_max : maximun range distance
+    
+    return : cylindrical projection (or panorama view) of lidar
+    '''
+    
+    x = lidar[:,0]
+    y = lidar[:,1]
+    z = lidar[:,2]
+    d = np.sqrt(np.square(x)+np.square(y))
+        
+    
+    theta = np.arctan2(-y, x)
+    phi = -np.arctan2(z, d)
+    
+    x_view = np.int16(np.ceil((theta*180/np.pi - hor_fov[0])/h_res))
+    y_view = np.int16(np.ceil((phi*180/np.pi + ver_fov[1])/v_res))
+    
+    x_max = 255
+    y_max = 63
+    
+    indices = np.logical_and( np.logical_and(x_view >= 0, x_view <= x_max), 
+                           np.logical_and(y_view >= 0, y_view <= y_max)  )
+    
+    x_view = x_view[indices]
+    y_view = y_view[indices]
+    x = x[indices]
+    y = y[indices]
+    z = z[indices]
+    theta = theta[indices]
+    phi = phi[indices]
+    coord = [[x[i],y[i],z[i],theta[i],phi[i]] for i in range(len(x))]
+    
+    view = np.zeros([y_max+1, x_max+1, 5],dtype=np.float64)
+    view[y_view,x_view] = coord
+    
+    return view
 
 def rotation(theta, point):
     v = np.sin(theta)
@@ -256,16 +354,24 @@ def box_encoder(point, boxes):
 
 
 
-def augmentation(theta, flip, lidar, gtboxes):
+# def augmentation(theta, flip, lidar, gtboxes):
+#     if flip == 0:
+#         out_lidar = np.array([rotation(theta, lidar[i]) for i in range(len(lidar))])
+#         out_gtboxes = np.array([[rotation(theta, gtboxes[i,j,:]) for j in range(8)] for i in range(len(gtboxes))])
+#     else:
+#         out_lidar = np.array([flip_rotation(theta, lidar[i]) for i in range(len(lidar))])
+#         out_gtboxes = np.array([[flip_rotation(theta, gtboxes[i,j,:]) for j in range(8)] for i in range(len(gtboxes))])
+   
+#     return out_lidar, out_gtboxes
+
+
+def augmentation(theta, flip, gtboxes):
     if flip == 0:
-        out_lidar = np.array([rotation(theta, lidar[i]) for i in range(len(lidar))])
         out_gtboxes = np.array([[rotation(theta, gtboxes[i,j,:]) for j in range(8)] for i in range(len(gtboxes))])
     else:
-        out_lidar = np.array([flip_rotation(theta, lidar[i]) for i in range(len(lidar))])
         out_gtboxes = np.array([[flip_rotation(theta, gtboxes[i,j,:]) for j in range(8)] for i in range(len(gtboxes))])
    
-    return out_lidar, out_gtboxes
-
+    return out_gtboxes
     
     
 

@@ -5,7 +5,7 @@ import os
 
 from keras.optimizers import Adam
 
-from fully_conv_model_for_lidar import fcn_model
+from fully_conv_model_for_lidar_2 import fcn_model
 from util_func import *
 
 
@@ -68,19 +68,19 @@ def train_batch_generator(list_of_lidar, list_of_gtbox, batch_size = 4,
             flip = np.random.randint(1)
             theta = np.random.uniform(low=-theta_offset_range, high=theta_offset_range)
 
-            lidar, gt_box = augmentation(theta, flip, lidar, gt_box)
+            #lidar, gt_box = augmentation(theta, flip, lidar, gt_box)
+            view, box = cylindrical_projection_for_training_with_augmentation(lidar, gt_box, theta, flip)
         
-        view, box = cylindrical_projection_with_labels(lidar, gt_box)
+        else:
+
+        	view, box = cylindrical_projection_for_training(lidar, gt_box)
 
         batch_sample[ind] = view
-        #batch_seg[ind] = seg
-        #batch_reg[ind] = reg
         batch_label[ind] = box
         
         ind += 1
         
         if ind == batch_size:
-            #yield batch_sample, [batch_seg, batch_reg]
             yield batch_sample, batch_label
             
             ind = 0   
@@ -114,19 +114,23 @@ if __name__ == '__main__':
 	list_of_lidar, list_of_gtbox = list_of_data(data_dir)
 
 	# test on just one sample
-	list_of_lidar = [list_of_lidar[108]]
-	list_of_gtbox = [list_of_gtbox[108]]
+	#list_of_lidar = [list_of_lidar[108]]
+	#list_of_gtbox = [list_of_gtbox[108]]
 
 	model = fcn_model(input_shape = (64,256,2), summary = True)
 	opt = Adam(lr=1e-5)
 	model.compile(optimizer=opt, loss=my_loss)
 
 
-	model.fit_generator(generator=train_batch_generator(list_of_lidar, list_of_gtbox, batch_size = 1, data_augmentation = False),
-                        steps_per_epoch=1,
-                        epochs=2000)
+	#model.fit_generator(generator=train_batch_generator(list_of_lidar, list_of_gtbox, batch_size = 1, data_augmentation = False),
+    #                    steps_per_epoch=1,
+    #                    epochs=2000)
 
-	model.save("saved_model/model.h5")
+	model.fit_generator(generator=train_batch_generator(list_of_lidar, list_of_gtbox, batch_size = 1, data_augmentation = False),
+                        steps_per_epoch=262,
+                        epochs=3)
+
+	model.save("saved_model/model_4.h5")
 
 	# model_json = model.to_json()
 	# with open("saved_model/model.json", "w") as json_file:
