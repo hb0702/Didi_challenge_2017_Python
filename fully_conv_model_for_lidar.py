@@ -115,8 +115,8 @@ def fcn_model(input_shape = (64,256,2), summary = True):
     bn102 = BatchNormalization(name='bn102')(concat102)
     conv102 = Conv2D(64, (3, 3), padding="same", kernel_initializer="glorot_uniform", 
                     activation="relu", name="conv102")(bn102)
-    out2 = Conv2D(9, (1, 1), padding="same", kernel_initializer="glorot_uniform", 
-                    activation="sigmoid", name="out2")(conv102)
+    out2 = Conv2D(7, (1, 1), padding="same", kernel_initializer="glorot_uniform", 
+                    activation="linear", name="out2")(conv102)
     
     #out = [out1, out2]
     out = Concatenate(name='concat_out')([out1, out2])

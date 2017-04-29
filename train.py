@@ -4,8 +4,9 @@ import keras
 import os
 
 from keras.optimizers import Adam
+from keras.models import load_model
 
-from fully_conv_model_for_lidar_2 import fcn_model
+from fully_conv_model_for_lidar import fcn_model
 from util_func import *
 
 
@@ -49,11 +50,11 @@ def data_generator(list_of_lidar, list_of_gtbox):
 
 
 
-def train_batch_generator(list_of_lidar, list_of_gtbox, batch_size = 4, 
+def train_batch_generator(list_of_lidar, list_of_gtbox, batch_size = 1, 
                     data_augmentation = True, width = 256, height = 64):
     '''
     '''
-    theta_offset_range = 10*np.pi/180
+    offset_range = 5*np.pi/180
     ind = 0
     for lidar_file, box_file in data_generator(list_of_lidar, list_of_gtbox):
         lidar = np.load(lidar_file)
@@ -61,15 +62,15 @@ def train_batch_generator(list_of_lidar, list_of_gtbox, batch_size = 4,
         
         if ind == 0:
             batch_sample = np.zeros((batch_size, height, width, 2))
-            batch_label = np.zeros((batch_size, height, width, 10))
+            batch_label = np.zeros((batch_size, height, width, 8))
             
         if data_augmentation:
-        # Randomly flip the frame
-            flip = np.random.randint(1)
-            theta = np.random.uniform(low=-theta_offset_range, high=theta_offset_range)
-
-            #lidar, gt_box = augmentation(theta, flip, lidar, gt_box)
-            view, box = cylindrical_projection_for_training_with_augmentation(lidar, gt_box, theta, flip)
+        	# Randomly flip the frame
+            flip = np.random.randint(2)
+            #flip = 1
+            offset = np.random.uniform(low=-offset_range, high=offset_range)
+            #offset = 0
+            view, box = cylindrical_projection_for_training_with_augmentation(lidar, gt_box, offset, flip)
         
         else:
 
@@ -87,8 +88,8 @@ def train_batch_generator(list_of_lidar, list_of_gtbox, batch_size = 4,
 
 def my_loss(y_true, y_pred):
 
-    seg_true,reg_true = tf.split(y_true, [1, 9], 3)
-    seg_pred,reg_pred = tf.split(y_pred, [1, 9], 3)
+    seg_true,reg_true = tf.split(y_true, [1, 7], 3)
+    seg_pred,reg_pred = tf.split(y_pred, [1, 7], 3)
     
     #ratio = 20*h*w/tf.reduce_sum(seg_true)
     #weight1 = ((ratio-1)*seg_true + 1)/ratio
@@ -114,23 +115,25 @@ if __name__ == '__main__':
 	list_of_lidar, list_of_gtbox = list_of_data(data_dir)
 
 	# test on just one sample
-	#list_of_lidar = [list_of_lidar[108]]
-	#list_of_gtbox = [list_of_gtbox[108]]
+	# list_of_lidar = [list_of_lidar[108]]
+	# list_of_gtbox = [list_of_gtbox[108]]
 
 	model = fcn_model(input_shape = (64,256,2), summary = True)
 	opt = Adam(lr=1e-5)
 	model.compile(optimizer=opt, loss=my_loss)
+	
+
+	# from keras.utils.generic_utils import get_custom_objects
+	# get_custom_objects().update({"my_loss": my_loss})
+	
+	# model = load_model('saved_model/model_with_augmentation.h5')
+
+	model.fit_generator(generator=train_batch_generator(list_of_lidar, list_of_gtbox, batch_size = 1, data_augmentation = True),
+                       steps_per_epoch=262,
+                       epochs=10)
 
 
-	#model.fit_generator(generator=train_batch_generator(list_of_lidar, list_of_gtbox, batch_size = 1, data_augmentation = False),
-    #                    steps_per_epoch=1,
-    #                    epochs=2000)
-
-	model.fit_generator(generator=train_batch_generator(list_of_lidar, list_of_gtbox, batch_size = 1, data_augmentation = False),
-                        steps_per_epoch=262,
-                        epochs=3)
-
-	model.save("saved_model/model_4.h5")
+	model.save("saved_model/model_whole_data.h5")
 
 	# model_json = model.to_json()
 	# with open("saved_model/model.json", "w") as json_file:

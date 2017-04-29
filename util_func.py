@@ -95,7 +95,7 @@ def is_in_box(point, box):
 
 def in_which_box(point, boxes):
     '''
-    return in which box the given point bolongs to, return 0 if the point doesn't belong to any boxes
+    return in which box the given point belongs to, return 0 if the point doesn't belong to any boxes
     '''
     for i in range(len(boxes)):
         if is_in_box(point, boxes[i]):
@@ -109,15 +109,14 @@ def cylindrical_projection_for_training(lidar,
                                        ver_fov = (-24.4, 2.),#(-24.9, 2.), 
                                        hor_fov = (-42.,42.), 
                                        v_res = 0.42,
-                                       h_res = 0.33,
-                                       d_max = None):
+                                       h_res = 0.33):
     '''
     lidar: a numpy array of shape N*D, D>=3
+    gt_box3d: Ground truth boxes of shape B*8*3 (B : number of boxes)
     ver_fov : angle range of vertical projection in degree
     hor_fov: angle range of horizantal projection in degree
     v_res : vertical resolusion
     h_res : horizontal resolution
-    d_max : maximun range distance
     
     return : cylindrical projection (or panorama view) of lidar
     '''
@@ -127,8 +126,8 @@ def cylindrical_projection_for_training(lidar,
     z = lidar[:,2]
     d = np.sqrt(np.square(x)+np.square(y))
     
-    if d_max != None:
-        d[d>d_max] = d_max
+    # if d_max != None:
+    #     d[d>d_max] = d_max
     
     
     theta = np.arctan2(-y, x)
@@ -155,15 +154,15 @@ def cylindrical_projection_for_training(lidar,
     encode_boxes = np.array([box_encoder(lidar[i], gt_box3d) for i in range(len(lidar))])
     encode_boxes = encode_boxes[indices]
     
-    box = np.zeros([y_max+1, x_max+1, 10],dtype=np.float32)
+    box = np.zeros([y_max+1, x_max+1, 8],dtype=np.float32)
     box[y_view,x_view] = encode_boxes
     
     return view, box
 
-
+# todo: add the case where there is no ground truth boxes
 def cylindrical_projection_for_training_with_augmentation(lidar,
 															gt_box3d,
-															theta,
+															offset,
 															flip,
 															ver_fov = (-24.4, 2.),#(-24.9, 2.), 
 															hor_fov = [-42.,42.],
@@ -171,50 +170,20 @@ def cylindrical_projection_for_training_with_augmentation(lidar,
 															h_res = 0.33):
     '''
     lidar: a numpy array of shape N*D, D>=3
+    gt_box3d: Ground truth boxes of shape B*8*3 (B : number of boxes)
+    offset: angle (in rad) of rotation
+    flip: 0 or 1 
     ver_fov : angle range of vertical projection in degree
     hor_fov: angle range of horizantal projection in degree
     v_res : vertical resolusion
     h_res : horizontal resolution
-    d_max : maximun range distance
     
     return : cylindrical projection (or panorama view) of lidar
     '''
-    
-    x = lidar[:,0]
-    y = lidar[:,1]
-    z = lidar[:,2]
-    d = np.sqrt(np.square(x)+np.square(y))
-    
-    hor_fov = [hor_fov[0]-theta, hor_fov[0]-theta]
+    new_lidar, new_gt_box3d = augmentation(offset, flip, lidar, gt_box3d)
 
-    theta = np.arctan2(-y, x)
-    phi = -np.arctan2(z, d)
-    
-    x_view = np.int16(np.ceil((theta*180/np.pi - hor_fov[0])/h_res))
-    y_view = np.int16(np.ceil((phi*180/np.pi + ver_fov[1])/v_res))
-    
-    x_max = 255
-    y_max = 63
-    
-    indices = np.logical_and( np.logical_and(x_view >= 0, x_view <= x_max), 
-                           np.logical_and(y_view >= 0, y_view <= y_max)  )
-    
-    x_view = x_view[indices]
-    y_view = y_view[indices]
-    z = z[indices]
-    d = d[indices]
-    d_z = [[d[i],z[i]] for i in range(len(d))]
-    
-    view = np.zeros([y_max+1, x_max+1, 2],dtype=np.float64)
-    view[y_view,x_view] = d_z
-    
-    new_gt_box3d = augmentation(theta, flip, gt_box3d)
-    encode_boxes = np.array([box_encoder(lidar[i], new_gt_box3d) for i in range(len(lidar))])
-    encode_boxes = encode_boxes[indices]
-    
-    box = np.zeros([y_max+1, x_max+1, 10],dtype=np.float32)
-    box[y_view,x_view] = encode_boxes
-    
+    view, box = cylindrical_projection_for_training(new_lidar, new_gt_box3d)
+ 
     return view, box
 
 def cylindrical_projection_for_test(lidar,
@@ -268,19 +237,19 @@ def cylindrical_projection_for_test(lidar,
     return view
 
 def rotation(theta, point):
-    v = np.sin(theta)
-    u = np.cos(theta)
-    out = np.copy(point)
-    out[0] = u*out[0] + v*out[1]
-    out[1] = -v*out[0] + u*out[1]
-    return out
+	v = np.sin(theta)
+	u = np.cos(theta)
+	out = np.copy(point)
+	out[0] = u*point[0] + v*point[1]
+	out[1] = -v*point[0] + u*point[1]
+	return out
 
-def rotation_y(phi, point):
+def rotation_y(phi, point):	
     v = np.sin(phi)
     u = np.cos(phi)
     out = np.copy(point)
-    out[0] = u*out[0] + v*out[2]
-    out[2] = -v*out[0] + u*out[2]
+    out[0] = u*point[0] + v*point[2]
+    out[2] = -v*point[0] + u*point[2]
     return out
 
 
@@ -288,8 +257,8 @@ def flip_rotation(theta, point):
     v = np.sin(theta)
     u = np.cos(theta)
     out = np.copy(point)
-    out[0] = u*out[0] + v*out[1]
-    out[1] = v*out[0] - u*out[1]
+    out[0] = u*point[0] + v*point[1]
+    out[1] = v*point[0] - u*point[1]
     return out
 
 
@@ -301,7 +270,7 @@ def box_encoder(point, boxes):
     box_num = in_which_box(point, boxes)
     #print(box_num)
     if box_num==0:
-        return np.zeros(10)
+        return np.zeros(8)
         
     
     box = boxes[box_num-1]
@@ -313,67 +282,45 @@ def box_encoder(point, boxes):
     u0 = point[:3] - box[0] 
     ru0 = rotation(-theta, u0)
     
-    u1 = point[:3] - box[1] 
-    ru1 = rotation(-theta, u1)
-    #print('u= ', u)
     u6 = point[:3] - box[6] 
     ru6 = rotation(-theta, u6)
     
-    #print('v= ', v)
-    #l1 = (box[3][0]-box[0][0])**2 + (box[3][1]-box[0][1])**2
-    #l2 = box[4][2]-box[0][2]
-    return np.array([1, ru0[0], ru0[1], ru0[2], ru1[0], ru1[1], ru1[2], ru6[0], ru6[1], ru6[2]])
+    x = np.sqrt(np.sum(np.square(box[1,:2] - box[2,:2])))
+    z = np.sqrt(np.sum(np.square(box[0,:2] - box[2,:2])))
+    phi = np.arcsin(x/z)
 
-
-# def box_encoder(point, boxes):
-#     '''
-        
-#     '''
-#     box_num = in_which_box(point, boxes)
-#     #print(box_num)
-#     if box_num==0:
-#         return np.zeros(25)
-        
-    
-#     box = boxes[box_num-1]
-#     #print(box.shape)
-    
-#     theta = np.arctan2(-point[1], point[0])
-#     #print(theta*180/np.pi)
-#     phi = -np.arctan2(point[2], np.sqrt(point[0]**2 + point[1]**2) )
-    
-#     new_point = point[:3].reshape(1,3)
-#     offset = box - new_point
-#     offset = np.array([rotation_y(-phi, rotation(-theta,offset[i])) for i in range(8) ]).reshape(-1)
-#     out = np.ones(25)
-#     out[1:] = offset
-
-#     return out
+    return np.array([1, ru0[0], ru0[1], ru0[2], ru6[0], ru6[1], ru6[2], phi])
 
 
 
 
+def augmentation(offset, flip, lidar, gtboxes):
+	u = np.cos(offset)
+	v = np.sin(offset)
 
-# def augmentation(theta, flip, lidar, gtboxes):
-#     if flip == 0:
-#         out_lidar = np.array([rotation(theta, lidar[i]) for i in range(len(lidar))])
-#         out_gtboxes = np.array([[rotation(theta, gtboxes[i,j,:]) for j in range(8)] for i in range(len(gtboxes))])
-#     else:
-#         out_lidar = np.array([flip_rotation(theta, lidar[i]) for i in range(len(lidar))])
-#         out_gtboxes = np.array([[flip_rotation(theta, gtboxes[i,j,:]) for j in range(8)] for i in range(len(gtboxes))])
-   
-#     return out_lidar, out_gtboxes
+	out_lidar = np.copy(lidar)
+	out_gtboxes = np.copy(gtboxes)
+
+	if flip == 1:
+		
+		out_lidar[:,0] = u*lidar[:,0] + v*lidar[:,1]
+		out_lidar[:,1] = v*lidar[:,0] - u*lidar[:,1]
+
+		out_gtboxes[:,:,0] = u*gtboxes[:,:,0] + v*gtboxes[:,:,1]
+		out_gtboxes[:,:,1] = v*gtboxes[:,:,0] - u*gtboxes[:,:,1]
 
 
-def augmentation(theta, flip, gtboxes):
-    if flip == 0:
-        out_gtboxes = np.array([[rotation(theta, gtboxes[i,j,:]) for j in range(8)] for i in range(len(gtboxes))])
-    else:
-        out_gtboxes = np.array([[flip_rotation(theta, gtboxes[i,j,:]) for j in range(8)] for i in range(len(gtboxes))])
-   
-    return out_gtboxes
-    
-    
+	else:
+
+		out_lidar[:,0] = u*lidar[:,0] + v*lidar[:,1]
+		out_lidar[:,1] = -v*lidar[:,0] + u*lidar[:,1]
+
+		out_gtboxes[:,:,0] = u*gtboxes[:,:,0] + v*gtboxes[:,:,1]
+		out_gtboxes[:,:,1] = -v*gtboxes[:,:,0] + u*gtboxes[:,:,1]
+
+
+	return out_lidar, out_gtboxes
+
 
 
 def viz_mayavi_with_labels(points, boxes, view_boxes = True, vals="distance"):
