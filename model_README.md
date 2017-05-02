@@ -31,12 +31,21 @@ The ideal of the model as follows:
 
 `Output:` two tensors:
 + A tensor of shape `(64,256,1)` where the number at the position `[x,y,0]` presents the at which probability the the pixel `[x,y]` belongs the the obstacle. This part works as a segmentation problem (`out1` line 110, file `fully_conv_model_for_lidar.py`)
-+ A tensor of shape `(64,256,9)` where the 9 value vector `[x,y,:]` presents the coordinate of three corners of the bounding box containing the point `[x,y]`. I chose the corners number 0, 1, 6 of the box, the other five corners will be inferred from the three corners. This part works as a multi-regression problem (`out2` line 118, file `fully_conv_model_for_lidar.py`)
++ A tensor of shape `(64,256,7)` where the first 6 value vector `[x,y,:]` presents the coordinate of two opposite  corners of the bounding box containing the point `[x,y]`, the last value encodes how narrow the bottom rectangular of the box is. I chose the corners number 0 and 6 of the box, the other six corners will be inferred from those values. This part works as a multi-regression problem (`out2` line 118, file `fully_conv_model_for_lidar.py`)
 
 `Loss function`: function `my_loss()` line 88-107 file `train.py`. The total loss includes two losses: log loss for segmentation part (`seg_loss`) and mean squared error (MSE) for regression part.
 
+### Prediction and clustering the output boxes
+The function `predict_boxes()` in file `util_func.py`.
+
+`Input`: the trained model and lidar points (of shape N*C, C>=3)
+
+`Output`:
++ `all_boxes`: all of boxes with segmentation probability >= 0.5
++ `cluster_boxes`: list of boxes after clustering
+
+
+
 ### Todo
-1. Combine the predicted boxes to output a single box for each obstacle (Non-Maximum Suppression, clustering, heatmap, ...)
-2. Modify the regression part of the model to get better accuracy
-3. Normalize the data before training
-4. Modify the loss function: add weights for two losses based on the statistics of training data
+1. Normalize the data before training
+2. Modify the loss function: add weights for two losses based on the statistics of training data
