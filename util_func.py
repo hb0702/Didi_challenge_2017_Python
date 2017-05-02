@@ -6,11 +6,10 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 def cylindrical_projection(lidar, 
-                           ver_fov = (-24.9, 2.), 
-                           hor_fov = (-180, 180), 
+                           ver_fov = (-24.4, 2.),#(-24.9, 2.), 
+                           hor_fov = (-42.,42.), 
                            v_res = 0.42,
-                           h_res = 0.35,
-                           d_max = None):
+                           h_res = 0.33):
     '''
     lidar: a numpy array of shape N*D, D>=3
     ver_fov : angle range of vertical projection in degree
@@ -27,9 +26,6 @@ def cylindrical_projection(lidar,
     z = lidar[:,2]
     d = np.sqrt(np.square(x)+np.square(y))
     
-    if d_max != None:
-        d[d>d_max] = d_max
-    
     
     theta = np.arctan2(-y, x)
     phi = -np.arctan2(z, d)
@@ -37,9 +33,8 @@ def cylindrical_projection(lidar,
     x_view = np.int16(np.ceil((theta*180/np.pi - hor_fov[0])/h_res))
     y_view = np.int16(np.ceil((phi*180/np.pi + ver_fov[1])/v_res))
     
-    x_max = int(np.ceil((hor_fov[1] - hor_fov[0])/h_res))
-    y_max = int(np.ceil((ver_fov[1] - ver_fov[0])/v_res))
-    
+    x_max = 255
+    y_max = 63
     
     indices = np.logical_and( np.logical_and(x_view >= 0, x_view <= x_max), 
                            np.logical_and(y_view >= 0, y_view <= y_max)  )
@@ -50,10 +45,7 @@ def cylindrical_projection(lidar,
     d = d[indices]
     d_z = [[d[i],z[i]] for i in range(len(d))]
     
-    width_view = int(np.ceil((hor_fov[1] - hor_fov[0])/h_res)) 
-    height_view = int(np.ceil((ver_fov[1] - ver_fov[0])/v_res))
-    
-    view = np.zeros([height_view+1, width_view+1, 2],dtype=np.float64)
+    view = np.zeros([y_max+1, x_max+1, 2],dtype=np.float32)
     view[y_view,x_view] = d_z
     return view
 
@@ -126,9 +118,6 @@ def cylindrical_projection_for_training(lidar,
     z = lidar[:,2]
     d = np.sqrt(np.square(x)+np.square(y))
     
-    # if d_max != None:
-    #     d[d>d_max] = d_max
-    
     
     theta = np.arctan2(-y, x)
     phi = -np.arctan2(z, d)
@@ -148,7 +137,7 @@ def cylindrical_projection_for_training(lidar,
     d = d[indices]
     d_z = [[d[i],z[i]] for i in range(len(d))]
     
-    view = np.zeros([y_max+1, x_max+1, 2],dtype=np.float64)
+    view = np.zeros([y_max+1, x_max+1, 2],dtype=np.float32)
     view[y_view,x_view] = d_z
     
     encode_boxes = np.array([box_encoder(lidar[i], gt_box3d) for i in range(len(lidar))])
@@ -160,31 +149,31 @@ def cylindrical_projection_for_training(lidar,
     return view, box
 
 # todo: add the case where there is no ground truth boxes
-def cylindrical_projection_for_training_with_augmentation(lidar,
-															gt_box3d,
-															offset,
-															flip,
-															ver_fov = (-24.4, 2.),#(-24.9, 2.), 
-															hor_fov = [-42.,42.],
-															v_res = 0.42,
-															h_res = 0.33):
-    '''
-    lidar: a numpy array of shape N*D, D>=3
-    gt_box3d: Ground truth boxes of shape B*8*3 (B : number of boxes)
-    offset: angle (in rad) of rotation
-    flip: 0 or 1 
-    ver_fov : angle range of vertical projection in degree
-    hor_fov: angle range of horizantal projection in degree
-    v_res : vertical resolusion
-    h_res : horizontal resolution
+# def cylindrical_projection_for_training_with_augmentation(lidar,
+# 															gt_box3d,
+# 															offset,
+# 															flip,
+# 															ver_fov = (-24.4, 2.),#(-24.9, 2.), 
+# 															hor_fov = [-42.,42.],
+# 															v_res = 0.42,
+# 															h_res = 0.33):
+#     '''
+#     lidar: a numpy array of shape N*D, D>=3
+#     gt_box3d: Ground truth boxes of shape B*8*3 (B : number of boxes)
+#     offset: angle (in rad) of rotation
+#     flip: 0 or 1 
+#     ver_fov : angle range of vertical projection in degree
+#     hor_fov: angle range of horizantal projection in degree
+#     v_res : vertical resolusion
+#     h_res : horizontal resolution
     
-    return : cylindrical projection (or panorama view) of lidar
-    '''
-    new_lidar, new_gt_box3d = augmentation(offset, flip, lidar, gt_box3d)
+#     return : cylindrical projection (or panorama view) of lidar
+#     '''
+#     new_lidar, new_gt_box3d = augmentation(offset, flip, lidar, gt_box3d)
 
-    view, box = cylindrical_projection_for_training(new_lidar, new_gt_box3d)
+#     view, box = cylindrical_projection_for_training(new_lidar, new_gt_box3d)
  
-    return view, box
+#     return view, box
 
 def cylindrical_projection_for_test(lidar,
                                        #gt_box3d,
@@ -227,11 +216,13 @@ def cylindrical_projection_for_test(lidar,
     x = x[indices]
     y = y[indices]
     z = z[indices]
+    d = d[indices]
+    
     theta = theta[indices]
     phi = phi[indices]
-    coord = [[x[i],y[i],z[i],theta[i],phi[i]] for i in range(len(x))]
+    coord = [[x[i],y[i],z[i],theta[i],phi[i],d[i]] for i in range(len(x))]
     
-    view = np.zeros([y_max+1, x_max+1, 5],dtype=np.float64)
+    view = np.zeros([y_max+1, x_max+1, 6],dtype=np.float32)
     view[y_view,x_view] = coord
     
     return view
@@ -320,6 +311,108 @@ def augmentation(offset, flip, lidar, gtboxes):
 
 
 	return out_lidar, out_gtboxes
+
+def augmentation_2(offset, flip, lidar, gtboxes):
+	u = np.cos(offset)
+	v = np.sin(offset)
+
+	out_lidar = np.copy(lidar)
+	out_gtboxes = np.copy(gtboxes)
+
+	if flip == 1:
+		
+		out_lidar[:,0] = u*lidar[:,0] + v*lidar[:,1]
+		out_lidar[:,1] = v*lidar[:,0] - u*lidar[:,1]
+
+		out_gtboxes[:,:,0] = u*gtboxes[:,:,0] + v*gtboxes[:,:,1]
+		out_gtboxes[:,:,1] = v*gtboxes[:,:,0] - u*gtboxes[:,:,1]
+
+		out_gtboxes = out_gtboxes[:,[0,3,2,1,4,7,6,5],:]
+
+
+	else:
+
+		out_lidar[:,0] = u*lidar[:,0] + v*lidar[:,1]
+		out_lidar[:,1] = -v*lidar[:,0] + u*lidar[:,1]
+
+		out_gtboxes[:,:,0] = u*gtboxes[:,:,0] + v*gtboxes[:,:,1]
+		out_gtboxes[:,:,1] = -v*gtboxes[:,:,0] + u*gtboxes[:,:,1]
+
+
+	return out_lidar, out_gtboxes
+
+
+def predict_boxes(model,lidar, cluster = True, seg_thres=0.5, cluster_dist = 0.1, min_dist = 1.5, neigbor_thres = 3):
+	view =  cylindrical_projection_for_test(lidar)
+	cylindrical_view = view[:,:,[5,2]].reshape(1,64,256,2)
+	pred = model.predict(cylindrical_view)
+	pred = pred[0]
+
+
+	pred = pred.reshape(-1,8)
+	view = view.reshape(-1,6)
+	thres_pred = pred[pred[:,0] > seg_thres]
+	thres_view = view[pred[:,0] > seg_thres]
+
+	num_boxes = len(thres_pred)
+	box_dist = np.zeros((num_boxes, num_boxes))
+
+	boxes = np.zeros((num_boxes,8,3))
+	for i in range(num_boxes):
+		boxes[i,0] = thres_view[i,:3] - rotation(thres_view[i,3],thres_pred[i,1:4])
+		boxes[i,6] = thres_view[i,:3] - rotation(thres_view[i,3],thres_pred[i,4:7])
+
+		boxes[i,2,:2] = boxes[i,6,:2]
+		boxes[i,2,2] = boxes[i,0,2]
+
+		phi = thres_pred[i,-1]
+
+		z = boxes[i,2] - boxes[i,0]
+		boxes[i,1,0] = (np.cos(phi)*z[0] + np.sin(phi)*z[1])*np.cos(phi) + boxes[i,0,0]
+		boxes[i,1,1] = (-np.sin(phi)*z[0] + np.cos(phi)*z[1])*np.cos(phi) + boxes[i,0,1]
+		boxes[i,1,2] = boxes[i,0,2]
+
+		boxes[i,3] = boxes[i,0] + boxes[i,2] - boxes[i,1]
+		boxes[i,4] = boxes[i,0] + boxes[i,6] - boxes[i,2]
+		boxes[i,5] = boxes[i,1] + boxes[i,4] - boxes[i,0]
+		boxes[i,7] = boxes[i,4] + boxes[i,6] - boxes[i,5]
+
+	if not cluster:
+		return boxes
+
+	all_boxes = np.copy(boxes)
+
+	flatteb_boxes = boxes.reshape(-1,24)
+	for i in range(num_boxes):
+		box_dist[i] = np.sqrt(np.sum(np.square(flatteb_boxes[[i]] - flatteb_boxes), axis = 1))
+
+	cluster_boxes = []
+		
+	thres_box_dist = box_dist < cluster_dist
+	neighbor = np.sum(thres_box_dist, axis = 1)
+
+	while len(neighbor)>0:
+		
+		ind = np.argmax(neighbor)
+		
+		if neighbor[ind] < neigbor_thres:
+		    break
+
+		cluster_boxes.append(boxes[ind])
+		
+		remain_indx = box_dist[ind] > min_dist
+		
+		box_dist = box_dist[remain_indx]
+		box_dist = box_dist[:,remain_indx]
+
+		thres_box_dist = thres_box_dist[remain_indx]
+		thres_box_dist = thres_box_dist[:,remain_indx]
+		        
+		boxes = boxes[remain_indx]
+		
+		neighbor = np.sum(thres_box_dist, axis = 1)
+	
+	return all_boxes, np.array(cluster_boxes) 
 
 
 

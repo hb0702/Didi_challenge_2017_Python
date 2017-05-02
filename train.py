@@ -6,7 +6,7 @@ import os
 from keras.optimizers import Adam
 from keras.models import load_model
 
-from fully_conv_model_for_lidar import fcn_model
+from fully_conv_model_for_lidar_2 import fcn_model
 from util_func import *
 
 
@@ -70,11 +70,10 @@ def train_batch_generator(list_of_lidar, list_of_gtbox, batch_size = 1,
             #flip = 1
             offset = np.random.uniform(low=-offset_range, high=offset_range)
             #offset = 0
-            view, box = cylindrical_projection_for_training_with_augmentation(lidar, gt_box, offset, flip)
-        
-        else:
+            lidar, gt_box = augmentation(offset, flip, lidar, gt_box)
 
-        	view, box = cylindrical_projection_for_training(lidar, gt_box)
+
+        view, box = cylindrical_projection_for_training(lidar, gt_box)
 
         batch_sample[ind] = view
         batch_label[ind] = box
@@ -126,14 +125,14 @@ if __name__ == '__main__':
 	# from keras.utils.generic_utils import get_custom_objects
 	# get_custom_objects().update({"my_loss": my_loss})
 	
-	# model = load_model('saved_model/model_with_augmentation.h5')
+	# model = load_model('saved_model/model_2_one_frame_with_aug.h5')
 
 	model.fit_generator(generator=train_batch_generator(list_of_lidar, list_of_gtbox, batch_size = 1, data_augmentation = True),
                        steps_per_epoch=262,
                        epochs=10)
 
 
-	model.save("saved_model/model_whole_data.h5")
+	model.save("saved_model/model_2_whole_data_with_aug.h5")
 
 	# model_json = model.to_json()
 	# with open("saved_model/model.json", "w") as json_file:
