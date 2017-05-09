@@ -34,6 +34,31 @@ Top teams required to submit identity verification documents and runnable code. 
 
 Top 5 teams present their solutions to a panel of Udacity and DiDi executives and have chance to run their code on Udacity’s self-driving car
 
+### How to setup environment
+* Install python-2.7 or Anaconda-2 (recommended)
+* Install ROS
+
+        $ sudo apt-get install ros-indigo-desktop-full
+
+* Setup ROS environment - add following to ~/.bashrc
+
+        source /opt/ros/indigo/setup.bash
+		source ~/catkin_ws/devel/setup.bash
+		export ROS_MASTER_URI=http://localhost:11311 export ROS_HOSTNAME=localhost
+
+* Install opencv
+
+        $ pip install opencv-python
+
+* Install CUDA and CuDNN
+* Install tensorflow-gpu
+
+        $ pip install tensorflow-gpu
+
+* Install keras
+
+        $ pip install keras
+
 ### How to setup development environment with Qt
 * Go to catkin workspace
 
@@ -41,7 +66,7 @@ Top 5 teams present their solutions to a panel of Udacity and DiDi executives an
 
 * Download kor_didi_pkg source
 * Move the original file of catkin_ws/src/CMakeLists.txt (should be /opt/ros/indigo/share/catkin/cmake/toplevel.cmake) to catkin_ws/src/, and change the file name to CMakeLists.txt
-* Set Qt Creator permission - add following to ~/.bashrc
+* Setup Qt Creator permission - add following to ~/.bashrc
 
         sudo -s chmod o+w /home/parkjaeil0108/.config/QtProject/qtcreator/*.xml
         sudo chown -R $USER:$USER /home/parkjaeil0108/.config/QtProject/
@@ -52,10 +77,6 @@ Top 5 teams present their solutions to a panel of Udacity and DiDi executives an
         $ qtcreator
 
 * Open catkin_ws/src/CMakeLists.txt on Qt Creator, set build directory to ~/catkin_ws/build
-* If you have 'ImportError: No module named catkin.environment_cache'..
-
-	
-        $ source /opt/ros/indigo/setup.bash
 
 ### How to run kor_didi_pkg
 * Go to catkin workspace
