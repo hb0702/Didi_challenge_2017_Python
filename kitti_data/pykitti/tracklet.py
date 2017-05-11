@@ -51,7 +51,7 @@ class Tracklet(object):
   absoluteFrameNumber is in range [firstFrame, firstFrame+nFrames[
   amtOcclusion and amtBorders could be None
 
-  You can of course also directly access the fields objType (string), size (len-3 ndarray), firstFrame/nFrames (int),
+  you can of course also directly access the fields objType (string), size (len-3 ndarray), firstFrame/nFrames (int),
     trans/rots (nFrames x 3 float ndarrays), states/truncs (len-nFrames uint8 ndarrays), occs (nFrames x 2 uint8 ndarray),
     and for some tracklets amtOccs (nFrames x 2 float ndarray) and amtBorders (nFrames x 3 float ndarray). The last two
     can be None if the xml file did not include these fields in poses
