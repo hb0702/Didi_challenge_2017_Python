@@ -3,13 +3,6 @@
 parse XML files containing tracklet info for kitti data base (raw data section)
 (http://cvlibs.net/datasets/kitti/raw_data.php)
 
-No guarantees that this code is correct, usage is at your own risk!
-
-created by Christian Herdtweck, Max Planck Institute for Biological Cybernetics
-  (christian.herdtweck@tuebingen.mpg.de)
-
-requires numpy!
-
 example usage:
   import parseTrackletXML as xmlParser
   kittiDir = '/path/to/kitti/data'
@@ -18,14 +11,6 @@ example usage:
 or simply on command line:
   python parseTrackletXML.py
 """
-
-# Version History:
-# 4/7/12 Christian Herdtweck: seems to work with a few random test xml tracklet files;
-#   converts file contents to ElementTree and then to list of Tracklet objects;
-#   Tracklet objects have str and iter functions
-# 5/7/12 ch: added constants for state, occlusion, truncation and added consistency checks
-# 30/1/14 ch: create example function from example code
-
 from sys import argv as cmdLineArgs
 from xml.etree.ElementTree import ElementTree
 import numpy as np
@@ -150,20 +135,10 @@ def parseXML(trackletFile, findCarOnly):
       hasAmt = False
       frameIdx = None
       for info in trackletElem:
-        # print 'trackInfo:', info.tag
         if isFinished:
           raise ValueError('more info on element after finished!')
         if info.tag == 'objectType':
-          if findCarOnly:
-            if info.text == "Car":
-              newTrack.objectType = info.text
-              print(info.text)
-            else:
-              print(info.text, "excluding from objects list")
-              skip_iter = True
-              break
-          elif findCarOnly == False:
-            newTrack.objectType=info.text
+          newTrack.objectType=info.text
         elif info.tag == 'h':
           newTrack.size[0] = float(info.text)
         elif info.tag == 'w':
@@ -244,12 +219,9 @@ def parseXML(trackletFile, findCarOnly):
           raise ValueError('unexpected tag in tracklets: {0}!'.format(info.tag))
       #end: for all fields in current tracklet
 
-      # skip to next iteration if objectType != "Car"
-      if skip_iter == True:
-        continue
       # some final consistency checks on new tracklet
-      # if not isFinished:
-      #   warn('tracklet {0} was not finished!'.format(trackletIdx))
+      if not isFinished:
+        warn('tracklet {0} was not finished!'.format(trackletIdx))
       if newTrack.nFrames is None:
         warn('tracklet {0} contains no information!'.format(trackletIdx))
       elif frameIdx != newTrack.nFrames:
@@ -264,8 +236,14 @@ def parseXML(trackletFile, findCarOnly):
         newTrack.amtBorders = None
 
       # add new tracklet to list
-      tracklets.append(newTrack)
-      trackletIdx += 1
+      if findCarOnly:
+        if newTrack.objectType == 'Car':
+            tracklets.append(newTrack)
+            trackletIdx += 1
+      elif:
+        tracklets.append(newTrack)
+        trackletIdx += 1
+          
 
     else:
       raise ValueError('unexpected tracklet info')
