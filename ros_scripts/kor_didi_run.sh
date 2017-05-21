@@ -5,7 +5,7 @@ filepath=$1
 scriptpath=$(readlink -f "$0")
 scriptdir=$(dirname "$SCRIPT")
 
-sudo chmod 755 $scriptdir/kor_didi_pkg/src/py_processor.py $scriptdir/kor_didi_pkg/src/py_processor.py
+sudo chmod 755 $scriptdir/../kor_didi_pkg/src/py_processor.py $scriptdir/../kor_didi_pkg/src/py_processor.py
 
 /bin/echo -e "\e[92mRunning kor_didi_pkg with $filepath\e[0m"
 #run kor_didi.launch ver1

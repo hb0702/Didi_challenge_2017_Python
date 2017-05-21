@@ -16,10 +16,10 @@ int main(int argc, char **argv)
 	std::string fileName(argv[1]);
 	opts.bags.push_back(fileName);
 
-	std::string bagImageTopic = "/image_raw";
+	// std::string bagImageTopic = "/image_raw";
     std::string bagLidarTopic = "/velodyne_packets";
 	
-	opts.topics.push_back(bagImageTopic);
+	// opts.topics.push_back(bagImageTopic);
     opts.topics.push_back(bagLidarTopic);
 	
 	rosbag::Player player(opts);

@@ -128,14 +128,15 @@ def parseXML(trackletFile, findCarOnly):
   print ('parsing tracklet file', trackletFile)
   with open(trackletFile) as f:
     eTree.parse(f)
-
+  
   # now convert output to list of Tracklet objects
   trackletsElem = eTree.find('tracklets')
   tracklets = []
   trackletIdx = 0
   nTracklets = None
   for trackletElem in trackletsElem:
-    #print 'track:', trackletElem.tag
+    skip_iter = False
+    #print 'track:', trackletElem.taga
     if trackletElem.tag == 'count':
       nTracklets = int(trackletElem.text)
       print ('file contains', nTracklets, 'tracklets')
@@ -244,7 +245,7 @@ def parseXML(trackletFile, findCarOnly):
       #end: for all fields in current tracklet
 
       # skip to next iteration if objectType != "Car"
-      if skip_iter:
+      if skip_iter == True:
         continue
       # some final consistency checks on new tracklet
       # if not isFinished:
