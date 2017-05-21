@@ -15,15 +15,15 @@ def list_of_data(data_dir):
 	list_of_lidar = []
 	list_of_gtbox = []
 	for f in os.listdir(data_dir):
-	    path = os.path.join(data_dir, f)
-	    lidar_path = os.path.join(path, 'lidar')
-	    gtbox_path = os.path.join(path, 'gt_boxes3d')
-	    num_files = len(os.listdir(lidar_path))
-	    
-	    lidar = [os.path.join(lidar_path, 'lidar_'+str(i)+'.npy') for i in range(num_files) ]
-	    gtbox = [os.path.join(gtbox_path, 'gt_boxes3d_'+str(i)+'.npy') for i in range(num_files) ]
-	    list_of_lidar += lidar
-	    list_of_gtbox += gtbox
+		path = os.path.join(data_dir, f)
+		lidar_path = os.path.join(path, 'lidar')
+		gtbox_path = os.path.join(path, 'gt_boxes3d')
+		num_files = len(os.listdir(lidar_path))
+
+		lidar = [os.path.join(lidar_path, 'lidar_'+str(i)+'.npy') for i in range(num_files) ]
+		gtbox = [os.path.join(gtbox_path, 'gt_boxes3d_'+str(i)+'.npy') for i in range(num_files) ]
+		list_of_lidar += lidar
+		list_of_gtbox += gtbox
 	return list_of_lidar, list_of_gtbox
 
 def data_generator(list_of_lidar, list_of_gtbox):
@@ -109,30 +109,43 @@ def my_loss(y_true, y_pred):
 
 if __name__ == '__main__':
 
+	depth_mean = 10.0574
+	height_mean = -0.9536
+	depth_var = 146.011
+	height_var = 0.76245
+
+	mean_tensor, std_tensor = get_mean_std_tensor(depth_mean, height_mean, depth_var, height_var, input_shape = (64,256,2))
+
 	data_dir = './extract_kiti/'
 
 	list_of_lidar, list_of_gtbox = list_of_data(data_dir)
 
-	# test on just one sample
+
+	#test on just one sample
 	# list_of_lidar = [list_of_lidar[108]]
 	# list_of_gtbox = [list_of_gtbox[108]]
 
-	model = fcn_model(input_shape = (64,256,2), summary = True)
-	opt = Adam(lr=1e-5)
+	batch_size = 32
+	num_frame = len(list_of_lidar)
+	steps_per_epoch = int(num_frame/batch_size)
+
+
+	model = fcn_model(mean_tensor, std_tensor, input_shape = (64,256,2), summary = True)
+	opt = Adam(lr=1e-4)
 	model.compile(optimizer=opt, loss=my_loss)
 	
 
 	# from keras.utils.generic_utils import get_custom_objects
 	# get_custom_objects().update({"my_loss": my_loss})
 	
-	# model = load_model('saved_model/model_2_one_frame_with_aug.h5')
+	# model = load_model('saved_model/model_2_normal_1_frame.h5')
 
-	model.fit_generator(generator=train_batch_generator(list_of_lidar, list_of_gtbox, batch_size = 1, data_augmentation = True),
-                       steps_per_epoch=262,
-                       epochs=10)
+	model.fit_generator(generator=train_batch_generator(list_of_lidar, list_of_gtbox, batch_size = batch_size, data_augmentation = True),
+                       steps_per_epoch=steps_per_epoch,
+                       epochs=500)
 
 
-	model.save("saved_model/model_2_whole_data_with_aug.h5")
+	model.save("saved_model/model_2.h5")
 
 	# model_json = model.to_json()
 	# with open("saved_model/model.json", "w") as json_file:

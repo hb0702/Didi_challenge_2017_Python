@@ -8,14 +8,16 @@ from keras.layers.pooling import MaxPooling2D
 from keras.layers.normalization import BatchNormalization
 from keras.layers.convolutional import Conv2D, Conv2DTranspose
 from keras.layers.merge import Concatenate
+from keras.layers.core import Lambda
 
 
-def fcn_model(input_shape = (64,256,2), summary = True):
+
+def fcn_model(mean_tensor, std_tensor, input_shape = (64,256,2), summary = True):
     
     input_img = Input(shape = input_shape)
 
-    #normalized_input = Lambda(lambda z: z / 255. - .5)(input_img)
-    # Todo: normalize two separate channel
+    normalized_input = Lambda(lambda z: (z - mean_tensor)/std_tensor)(input_img)
+    
     conv1 = Conv2D(64, (3, 3), activation='relu', kernel_initializer="glorot_uniform",
                           padding = 'same', name='conv1')(input_img)
     

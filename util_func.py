@@ -1,7 +1,7 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import mayavi.mlab
-from mpl_toolkits.mplot3d import Axes3D
+#import matplotlib.pyplot as plt
+#import mayavi.mlab
+#from mpl_toolkits.mplot3d import Axes3D
 
 
 
@@ -300,33 +300,6 @@ def augmentation(offset, flip, lidar, gtboxes):
 		out_gtboxes[:,:,0] = u*gtboxes[:,:,0] + v*gtboxes[:,:,1]
 		out_gtboxes[:,:,1] = v*gtboxes[:,:,0] - u*gtboxes[:,:,1]
 
-
-	else:
-
-		out_lidar[:,0] = u*lidar[:,0] + v*lidar[:,1]
-		out_lidar[:,1] = -v*lidar[:,0] + u*lidar[:,1]
-
-		out_gtboxes[:,:,0] = u*gtboxes[:,:,0] + v*gtboxes[:,:,1]
-		out_gtboxes[:,:,1] = -v*gtboxes[:,:,0] + u*gtboxes[:,:,1]
-
-
-	return out_lidar, out_gtboxes
-
-def augmentation_2(offset, flip, lidar, gtboxes):
-	u = np.cos(offset)
-	v = np.sin(offset)
-
-	out_lidar = np.copy(lidar)
-	out_gtboxes = np.copy(gtboxes)
-
-	if flip == 1:
-		
-		out_lidar[:,0] = u*lidar[:,0] + v*lidar[:,1]
-		out_lidar[:,1] = v*lidar[:,0] - u*lidar[:,1]
-
-		out_gtboxes[:,:,0] = u*gtboxes[:,:,0] + v*gtboxes[:,:,1]
-		out_gtboxes[:,:,1] = v*gtboxes[:,:,0] - u*gtboxes[:,:,1]
-
 		out_gtboxes = out_gtboxes[:,[0,3,2,1,4,7,6,5],:]
 
 
@@ -414,50 +387,60 @@ def predict_boxes(model,lidar, cluster = True, seg_thres=0.5, cluster_dist = 0.1
 	
 	return all_boxes, np.array(cluster_boxes) 
 
+def get_mean_std_tensor(depth_mean, height_mean, depth_var, height_var, input_shape = (64,256,2)):
+    mean_tensor = np.ones(input_shape)
+    std_tensor = np.ones(input_shape)
+    mean_tensor[:,:,0]*= depth_mean
+    mean_tensor[:,:,1]*= height_mean
+    std_tensor[:,:,0]*= np.sqrt(depth_var)
+    std_tensor[:,:,1]*= np.sqrt(height_var)
+    return mean_tensor, std_tensor
 
 
-def viz_mayavi_with_labels(points, boxes, view_boxes = True, vals="distance"):
-    x = points[:, 0]  # x position of point
-    y = points[:, 1]  # y position of point
-    z = points[:, 2]  # z position of pointfrom mpl_toolkits.mplot3d import Axes3D
-    # r = lidar[:, 3]  # reflectance value of point
-    d = np.sqrt(x ** 2 + y ** 2)  # Map Distance from sensor
 
-    # Plot using mayavi -Much faster and smoother than matplotlib
-    #import mayavi.mlab
-    if vals == "height":
-        col = z
-    else:
-        col = d
 
-    fig = mayavi.mlab.figure(bgcolor=(0, 0, 0), size=(640, 360))
-    mayavi.mlab.points3d(x, y, z,
-                         col,          # Values used for Color
-                         mode="point",
-                         colormap='spectral', # 'bone', 'copper', 'gnuplot'
-                         # color=(0, 1, 0),   # Used a fixed (r,g,b) instead
-                         figure=fig,
-                         )
+# def viz_mayavi_with_labels(points, boxes, view_boxes = True, vals="distance"):
+#     x = points[:, 0]  # x position of point
+#     y = points[:, 1]  # y position of point
+#     z = points[:, 2]  # z position of pointfrom mpl_toolkits.mplot3d import Axes3D
+#     # r = lidar[:, 3]  # reflectance value of point
+#     d = np.sqrt(x ** 2 + y ** 2)  # Map Distance from sensor
+
+#     # Plot using mayavi -Much faster and smoother than matplotlib
+#     #import mayavi.mlab
+#     if vals == "height":
+#         col = z
+#     else:
+#         col = d
+
+#     fig = mayavi.mlab.figure(bgcolor=(0, 0, 0), size=(640, 360))
+#     mayavi.mlab.points3d(x, y, z,
+#                          col,          # Values used for Color
+#                          mode="point",
+#                          colormap='spectral', # 'bone', 'copper', 'gnuplot'
+#                          # color=(0, 1, 0),   # Used a fixed (r,g,b) instead
+#                          figure=fig,
+#                          )
     
-    if view_boxes:
-        for i in range(len(boxes)):
-            car = boxes[i]
-            x = car[:,0]
-            y = car[:,1]
-            z = car[:,2]
+#     if view_boxes:
+#         for i in range(len(boxes)):
+#             car = boxes[i]
+#             x = car[:,0]
+#             y = car[:,1]
+#             z = car[:,2]
 
-            mayavi.mlab.plot3d(x[:4], y[:4], z[:4], tube_radius=0.025)#, colormap='Spectral')
-            mayavi.mlab.plot3d(x[[0,3]], y[[0,3]], z[[0,3]], tube_radius=0.025)
-            mayavi.mlab.plot3d(x[[0,4]], y[[0,4]], z[[0,4]], tube_radius=0.025)
-            mayavi.mlab.plot3d(x[[1,5]], y[[1,5]], z[[1,5]], tube_radius=0.025)
-            mayavi.mlab.plot3d(x[[2,6]], y[[2,6]], z[[2,6]], tube_radius=0.025)
-            mayavi.mlab.plot3d(x[[3,7]], y[[3,7]], z[[3,7]], tube_radius=0.025)
+#             mayavi.mlab.plot3d(x[:4], y[:4], z[:4], tube_radius=0.025)#, colormap='Spectral')
+#             mayavi.mlab.plot3d(x[[0,3]], y[[0,3]], z[[0,3]], tube_radius=0.025)
+#             mayavi.mlab.plot3d(x[[0,4]], y[[0,4]], z[[0,4]], tube_radius=0.025)
+#             mayavi.mlab.plot3d(x[[1,5]], y[[1,5]], z[[1,5]], tube_radius=0.025)
+#             mayavi.mlab.plot3d(x[[2,6]], y[[2,6]], z[[2,6]], tube_radius=0.025)
+#             mayavi.mlab.plot3d(x[[3,7]], y[[3,7]], z[[3,7]], tube_radius=0.025)
 
 
-            mayavi.mlab.plot3d(x[-4:], y[-4:], z[-4:], tube_radius=0.025)#, colormap='Spectral')
-            mayavi.mlab.plot3d(x[[4,7]], y[[4,7]], z[[4,7]], tube_radius=0.025)
+#             mayavi.mlab.plot3d(x[-4:], y[-4:], z[-4:], tube_radius=0.025)#, colormap='Spectral')
+#             mayavi.mlab.plot3d(x[[4,7]], y[[4,7]], z[[4,7]], tube_radius=0.025)
         
-    mayavi.mlab.show()
+#     mayavi.mlab.show()
 
 
 if __name__ == '__main__':
