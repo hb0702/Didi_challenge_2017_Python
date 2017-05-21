@@ -10,23 +10,23 @@ The submission deadlines are as noted below. All start dates start at 12:00 AM P
 
 Competition platform opens for account and team registration. Competitors can register with Udacity accounts or create a new account. Team leaders can recruit team members through Forum.
 
-#### March 22 – April 21 — Round 1
+#### March 22 – May 31 — Round 1
 
 Data set for Round 1 is released. New user and team registration closes on April 21
 
-#### April 22 – April 30 — Round 1 Evaluation
+#### June 1 – June 4 — Round 1 Evaluation
 
 Top 75 teams will be asked to submit runnable code. Code will be spot-checked to prevent fraudulent submissions of that group the Top 50 qualified teams will progress to next round.
 
-#### May 1 – May 31 — Round 2
+#### June 5 – July 3 — Round 2
 
 Data set for Round 2 is released. Teams will no longer be able to add or remove members after May 21.
 
-#### Jun 1 – Jun 14 — Finalist Evaluation
+#### July 4 – July 11 — Finalist Evaluation
 
 Top teams required to submit identity verification documents and runnable code. Code will be evaluated and output compared against scores on final leaderboard. Top 5 teams will be invited to attend final award ceremony at Udacity headquarters in Mountain View, California
 
-#### Jun 15 – July 12 — Travel arrangements
+#### Post July 11 — Travel arrangements
 
 5 week break for teams to arrange visas and travel that Udacity will help with
 
