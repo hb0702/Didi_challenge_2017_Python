@@ -70,13 +70,15 @@ include_directories(
 
 #This will create executables of the nodes
 add_executable(bag_publisher src/bag_publisher.cpp)
-add_executable(image_processor src/image_processor.cpp)
-add_executable(kf_localizer src/kf_localizer.cpp)
+#add_executable(image_processor src/image_processor.cpp)
+#add_executable(kf_localizer src/kf_localizer.cpp)
+add_executable(cpp_processor src/cpp_processor.cpp)
 
 #This will link executables to the appropriate libraries
 target_link_libraries(bag_publisher ${catkin_LIBRARIES})
-target_link_libraries(image_processor ${catkin_LIBRARIES})
-target_link_libraries(kf_localizer ${catkin_LIBRARIES})
+#target_link_libraries(image_processor ${catkin_LIBRARIES})
+#target_link_libraries(kf_localizer ${catkin_LIBRARIES})
+target_link_libraries(cpp_processor ${catkin_LIBRARIES})
 
 # set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 
