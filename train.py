@@ -127,8 +127,8 @@ if __name__ == '__main__':
 	# list_of_lidar = [list_of_lidar[108]]
 	# list_of_gtbox = [list_of_gtbox[108]]
 
-	list_of_lidar = list_of_lidar[:10]
-	list_of_gtbox = list_of_gtbox[:10]
+	# list_of_lidar = list_of_lidar[:10]
+	# list_of_gtbox = list_of_gtbox[:10]
 
 
 	batch_size = 32
