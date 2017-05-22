@@ -6,6 +6,8 @@ import os
 from keras.optimizers import Adam
 from keras.models import load_model
 
+from keras.callbacks import ModelCheckpoint, CSVLogger
+
 from fully_conv_model_for_lidar_2 import fcn_model
 from util_func import *
 
@@ -125,6 +127,10 @@ if __name__ == '__main__':
 	# list_of_lidar = [list_of_lidar[108]]
 	# list_of_gtbox = [list_of_gtbox[108]]
 
+	list_of_lidar = list_of_lidar[:10]
+	list_of_gtbox = list_of_gtbox[:10]
+
+
 	batch_size = 32
 	num_frame = len(list_of_lidar)
 	steps_per_epoch = int(num_frame/batch_size)
@@ -138,14 +144,19 @@ if __name__ == '__main__':
 	# from keras.utils.generic_utils import get_custom_objects
 	# get_custom_objects().update({"my_loss": my_loss})
 	
-	# model = load_model('saved_model/model_2_normal_1_frame.h5')
+	# model = load_model('saved_model/model_epoch.01.h5')
+
+
+	checkpointer = ModelCheckpoint('saved_model/model_epoch_{epoch:02d}.h5')
+	logger = CSVLogger(filename='saved_model/history.csv')
 
 	model.fit_generator(generator=train_batch_generator(list_of_lidar, list_of_gtbox, batch_size = batch_size, data_augmentation = True),
                        steps_per_epoch=steps_per_epoch,
-                       epochs=500)
+                       epochs=3,
+                       callbacks=[checkpointer, logger])
 
 
-	model.save("saved_model/model_2.h5")
+	#model.save("saved_model/model_2.h5")
 
 	# model_json = model.to_json()
 	# with open("saved_model/model.json", "w") as json_file:
