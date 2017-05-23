@@ -118,7 +118,7 @@ if __name__ == '__main__':
 
 	mean_tensor, std_tensor = get_mean_std_tensor(depth_mean, height_mean, depth_var, height_var, input_shape = (64,256,2))
 
-	data_dir = './extract_kiti/'
+	data_dir = './all_data/extract_kiti/'
 
 	list_of_lidar, list_of_gtbox = list_of_data(data_dir)
 
@@ -127,27 +127,27 @@ if __name__ == '__main__':
 	# list_of_lidar = [list_of_lidar[108]]
 	# list_of_gtbox = [list_of_gtbox[108]]
 
-	# list_of_lidar = list_of_lidar[:10]
-	# list_of_gtbox = list_of_gtbox[:10]
+	# list_of_lidar = list_of_lidar[:32]
+	# list_of_gtbox = list_of_gtbox[:32]
 
 
-	batch_size = 32
+	batch_size = 8
 	num_frame = len(list_of_lidar)
 	steps_per_epoch = int(num_frame/batch_size)
 
 
-	model = fcn_model(mean_tensor, std_tensor, input_shape = (64,256,2), summary = True)
-	opt = Adam(lr=1e-4)
-	model.compile(optimizer=opt, loss=my_loss)
+	# model = fcn_model(mean_tensor, std_tensor, input_shape = (64,256,2), summary = True)
+	# opt = Adam(lr=1e-4)
+	# model.compile(optimizer=opt, loss=my_loss)
 	
 
-	# from keras.utils.generic_utils import get_custom_objects
-	# get_custom_objects().update({"my_loss": my_loss})
+	from keras.utils.generic_utils import get_custom_objects
+	get_custom_objects().update({"my_loss": my_loss})
 	
-	# model = load_model('saved_model/model_epoch.01.h5')
+	model = load_model('saved_model/model_single_gpu_epoch_2_1.h5')
 
 
-	checkpointer = ModelCheckpoint('saved_model/model_epoch_{epoch:02d}.h5')
+	checkpointer = ModelCheckpoint('saved_model/model_May_23_epoch_{epoch:02d}.h5')
 	logger = CSVLogger(filename='saved_model/history.csv')
 
 	model.fit_generator(generator=train_batch_generator(list_of_lidar, list_of_gtbox, batch_size = batch_size, data_augmentation = True),
