@@ -14,7 +14,7 @@ from keras.layers import Input
 from keras.layers.pooling import MaxPooling2D
 from keras.layers.normalization import BatchNormalization
 from keras.layers.convolutional import Conv2D, Conv2DTranspose
-from keras.layers.merge import Concatenatess
+from keras.layers.merge import Concatenates
 
 class py_processor:
 
