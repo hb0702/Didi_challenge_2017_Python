@@ -169,13 +169,13 @@ if __name__ == '__main__':
 	lidar_dir = './extract_kiti/'
 	gt_box_dir = './new_gt_boxes/all_boxes/'
 	list_of_lidar, list_of_gtbox, list_of_view = list_of_paths(lidar_dir, gt_box_dir)
-
+    using_pool = False
 	
 	def convert(i):
 		lidar = np.load(list_of_lidar[i])
 		gt_box = np.load(list_of_gtbox[i])
 
-		print('onverting: ' + list_of_view[i])
+		#print('converting: ' + list_of_view[i])
 
 		view = cylindrical_projection_for_training(lidar, gt_box)
 		np.save(list_of_view[i], view)
@@ -184,9 +184,13 @@ if __name__ == '__main__':
 
 
 	start = time.time()
-	p = Pool(8)
-	print(p.map(convert, np.arange(len(list_of_lidar))))
-	print('Finish convert - total time = {0}'.format(time.time()-start))
+	if using_pool:
+        p = Pool(8)
+        p.map(convert, np.arange(len(list_of_lidar)))
+	else:
+        for i in range(len(list_of_lidar)):
+            convert(i)
+    print('Finish convert - total time = {0}'.format(time.time()-start))
 
 
 
