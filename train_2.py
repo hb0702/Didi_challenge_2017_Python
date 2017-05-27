@@ -146,22 +146,26 @@ if __name__ == '__main__':
 	num_frame = len(list_of_view)
 	steps_per_epoch = int(num_frame/batch_size)
 	
-	# model = fcn_model(mean_tensor, std_tensor, input_shape = (64,256,2), summary = True)
-	# opt = Adam(lr=1e-4)
-	# #keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
-	# model.compile(optimizer=opt, loss=my_loss)
-	
+	continue_training = False
+	saved_model = 'model_May_26_from_135_89.h5'
 
-	from keras.utils.generic_utils import get_custom_objects
-	get_custom_objects().update({"my_loss": my_loss})
-	
-	model = load_model('saved_model/model_May_26_from_25_19.h5')
+	if not continue_training:
+		model = fcn_model(mean_tensor, std_tensor, input_shape = (64,256,2), summary = True)
+		opt = Adam(lr=1e-4)
+		#keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
+		model.compile(optimizer=opt, loss=my_loss)
+		
+	else:
+		from keras.utils.generic_utils import get_custom_objects
+		get_custom_objects().update({"my_loss": my_loss})
+		
+		model = load_model(saved_model)
 	#opt = Adam(lr=1e-5)
 	# #keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 	#model.compile(optimizer=opt, loss=my_loss)
 	
 
-	checkpointer = ModelCheckpoint('saved_model/model_May_26_from_45_{epoch:02d}.h5')
+	checkpointer = ModelCheckpoint('saved_model/model_May_27_{epoch:02d}.h5')
 	logger = CSVLogger(filename='saved_model/history.csv')
 
 	print('Start training - batch_size : {0} - num_frame : {1} - steps_per_epoch : {2}'.format(batch_size,num_frame,steps_per_epoch))
