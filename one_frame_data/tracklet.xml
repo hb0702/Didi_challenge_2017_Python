@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<!DOCTYPE boost_serialization>
+<boost_serialization signature="serialization::archive" version="9">
+<tracklets class_id="0" tracking_level="0" version="0">
+	<count>3</count>
+	<item_version>1</item_version> 
+	<item class_id="1" tracking_level="0" version="1">
+		<objectType>Car</objectType>
+		<h>2.000000</h>
+		<w>4.433886</w>
+		<l>1.823256</l>
+		<first_frame>0</first_frame>
+		<poses class_id="2" tracking_level="0" version="0">
+			<count>1</count>
+			<item_version>2</item_version>
+			<item class_id="3" tracking_level="0" version="2">
+				<tx>13.701017</tx>
+				<ty>4.571365</ty>
+				<tz>-0.742359</tz>
+				<rx>0.000000</rx>
+				<ry>0.000000</ry>
+				<rz>-1.026105</rz>
+				<state>1</state>
+				<occlusion>-1</occlusion>
+				<occlusion_kf>-1</occlusion_kf>
+				<truncation>-1</truncation>
+				<amt_occlusion>0.0</amt_occlusion>
+				<amt_occlusion_kf>-1</amt_occlusion_kf>
+				<amt_border_l>0.0</amt_border_l>
+				<amt_border_r>0.0</amt_border_r>
+				<amt_border_kf>-1</amt_border_kf>
+			</item>
+		</poses>
+		<finished>1</finished>
+	</item>
+	<item class_id="4" tracking_level="0" version="1">
+		<objectType>Car</objectType>
+		<h>1.739063</h>
+		<w>1.785241</w>
+		<l>0.824591</l>
+		<first_frame>1</first_frame>
+		<poses class_id="5" tracking_level="0" version="0">
+			<count>1</count>
+			<item_version>2</item_version>
+			<item class_id="6" tracking_level="0" version="2">
+				<tx>6.066744</tx>
+				<ty>-1.623856</ty>
+				<tz>-0.835188</tz>
+				<rx>0.000000</rx>
+				<ry>0.000000</ry>
+				<rz>-1.466134</rz>
+				<state>1</state>
+				<occlusion>-1</occlusion>
+				<occlusion_kf>-1</occlusion_kf>
+				<truncation>-1</truncation>
+				<amt_occlusion>0.0</amt_occlusion>
+				<amt_occlusion_kf>-1</amt_occlusion_kf>
+				<amt_border_l>0.0</amt_border_l>
+				<amt_border_r>0.0</amt_border_r>
+				<amt_border_kf>-1</amt_border_kf>
+			</item>
+		</poses>
+		<finished>1</finished>
+	</item>
+	<item class_id="7" tracking_level="0" version="1">
+		<objectType>Car</objectType>
+		<h>1.714062</h>
+		<w>0.972283</w>
+		<l>0.767881</l>
+		<first_frame>2</first_frame>
+		<poses class_id="8" tracking_level="0" version="0">
+			<count>1</count>
+			<item_version>2</item_version>
+			<item class_id="9" tracking_level="0" version="2">
+				<tx>8.746874</tx>
+				<ty>-6.285027</ty>
+				<tz>-0.845689</tz>
+				<rx>0.000000</rx>
+				<ry>0.000000</ry>
+				<rz>-1.241348</rz>
+				<state>1</state>
+				<occlusion>-1</occlusion>
+				<occlusion_kf>-1</occlusion_kf>
+				<truncation>-1</truncation>
+				<amt_occlusion>0.0</amt_occlusion>
+				<amt_occlusion_kf>-1</amt_occlusion_kf>
+				<amt_border_l>0.0</amt_border_l>
+				<amt_border_r>0.0</amt_border_r>
+				<amt_border_kf>-1</amt_border_kf>
+			</item>
+		</poses>
+		<finished>1</finished>
+	</item>
+</tracklets>
+</boost_serialization> 
