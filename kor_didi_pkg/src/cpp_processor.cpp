@@ -127,7 +127,7 @@ private:
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "lidar_points_listener");
-	std::shared_ptr<CProcessor> processor = std::make_shared<CProcessor>();
+    CProcessor processor;
     ros::spin();
 
     return 0;
