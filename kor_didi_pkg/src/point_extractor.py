@@ -22,7 +22,7 @@ class point_extractor:
 		self.first_lidar_frame = -1
 	
 	def on_points_received(self, data):
-		rp.loginfo(rp.get_caller_id() + " Point received, %d", self.lidar_cnt)
+		#rp.loginfo(rp.get_caller_id() + " Point received, %d", self.lidar_cnt)
 		points = []
 		for p in pc2.read_points(data, skip_nans=True, field_names=("x", "y", "z")):
 			points.append([p[0], p[1], p[2]])
@@ -34,7 +34,7 @@ class point_extractor:
 		self.lidar_cnt += 1
 	
 	def on_image_received(self, data):
-		rp.loginfo(rp.get_caller_id() + " Frame %d", self.image_cnt)
+		#rp.loginfo(rp.get_caller_id() + " Frame %d", self.image_cnt)
 		if self.lidar is None:
 			self.first_lidar_frame = self.image_cnt
 		else:
