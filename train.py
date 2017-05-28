@@ -156,7 +156,7 @@ if __name__ == '__main__':
 	percent_noncar = 0.097
 
 	with open(pickle_index_file, 'rb') as f:
-		car_index = pickle.load(f)
+		car_index = pickle.load(f, encoding='latin1')
 	
 	if undersample:
 		num_frame = int(len(car_index[0])*percent_noncar)
