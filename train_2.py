@@ -140,14 +140,14 @@ if __name__ == '__main__':
 
 
 	batch_size = 32
-	epochs = 90
+	epochs = 100
 	augmentation = True
 	
 	num_frame = len(list_of_view)
 	steps_per_epoch = int(num_frame/batch_size)
 	
-	continue_training = False
-	saved_model = 'model_May_26_from_135_89.h5'
+	continue_training = True
+	saved_model = './saved_model/model_May_27_185_99.h5'
 
 	if not continue_training:
 		model = fcn_model(mean_tensor, std_tensor, input_shape = (64,256,2), summary = True)
@@ -165,8 +165,8 @@ if __name__ == '__main__':
 	#model.compile(optimizer=opt, loss=my_loss)
 	
 
-	checkpointer = ModelCheckpoint('saved_model/model_May_27_{epoch:02d}.h5')
-	logger = CSVLogger(filename='saved_model/history.csv')
+	checkpointer = ModelCheckpoint('saved_model/model_May_27_195_{epoch:02d}.h5')
+	logger = CSVLogger(filename='saved_model/model_May_27_195.csv')
 
 	print('Start training - batch_size : {0} - num_frame : {1} - steps_per_epoch : {2}'.format(batch_size,num_frame,steps_per_epoch))
 	start = time.time()
