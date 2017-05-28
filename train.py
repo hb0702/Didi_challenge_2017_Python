@@ -56,17 +56,17 @@ def data_generator(list_of_lidar, list_of_gtbox, car_index = None, undersample =
 
 	while True:
 		if next_epoch:
+			ind = 0
 			indices = np.arange(n_sample)
 			np.random.shuffle(indices)
-			yield new_list_of_lidar[indices[0]], new_list_of_gtbox[indices[0]]
-			ind = 1
+			yield new_list_of_lidar[indices[ind]], new_list_of_gtbox[indices[ind]]
 			next_epoch = False
 		else:
-			yield new_list_of_lidar[indices[0]], new_list_of_gtbox[indices[0]]
+			yield new_list_of_lidar[indices[ind]], new_list_of_gtbox[indices[ind]]
 			ind += 1
 			if ind >= n_sample:
-				next_epoch = True  
-
+				next_epoch = True
+				
 
 
 
@@ -153,7 +153,7 @@ if __name__ == '__main__':
 	batch_size = 16
 	pickle_index_file = './saved_model/numcar_ind.pickle'
 	undersample = True
-	percent_noncar = 0.1
+	percent_noncar = 0.097
 
 	with open(pickle_index_file, 'rb') as f:
 		car_index = pickle.load(f)
@@ -170,16 +170,17 @@ if __name__ == '__main__':
 
 	# model = fcn_model(mean_tensor, std_tensor, input_shape = (64,256,2), summary = True)
 	# opt = Adam(lr=1e-4)
+	# #keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 	# model.compile(optimizer=opt, loss=my_loss)
 	
 
 	from keras.utils.generic_utils import get_custom_objects
 	get_custom_objects().update({"my_loss": my_loss})
 	
-	model = load_model('saved_model/model_May_23_epoch_02.h5')
+	model = load_model('saved_model/model_May_24_epoch_03.h5')
 
 
-	checkpointer = ModelCheckpoint('saved_model/model_May_24_epoch_{epoch:02d}.h5')
+	checkpointer = ModelCheckpoint('saved_model/model_May_25_{epoch:02d}.h5')
 	logger = CSVLogger(filename='saved_model/history.csv')
 
 	print('Start training - batch_size : {0} - num_frame : {1} - steps_per_epoch : {2}'.format(batch_size,num_frame,steps_per_epoch))
@@ -188,7 +189,7 @@ if __name__ == '__main__':
 	model.fit_generator(generator=train_batch_generator(list_of_lidar, list_of_gtbox, batch_size = batch_size, data_augmentation = True, width = 256, height = 64,
 						car_index = car_index, undersample = undersample, percent_noncar = percent_noncar),
                        steps_per_epoch=steps_per_epoch,
-                       epochs=2,
+                       epochs=5,
                        callbacks=[checkpointer, logger])
 
 	print('End training - during time: {0} minutes'.format( int((time.time() - start)/60) ))
