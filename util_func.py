@@ -1,8 +1,13 @@
 import numpy as np
+import math
+import os
+from tracklet import Tracklet
+from tracklet import TrackletCollection
+from tracklet import TrackletGT
+from tracklet import parse_xml
 #import matplotlib.pyplot as plt
 #import mayavi.mlab
 #from mpl_toolkits.mplot3d import Axes3D
-
 
 
 def cylindrical_projection(lidar, 
@@ -177,10 +182,10 @@ def cylindrical_projection_for_training(lidar,
 
 def cylindrical_projection_for_test(lidar,
                                        #gt_box3d,
-                                       ver_fov = (-24.4, 2.),#(-24.9, 2.), 
-                                       hor_fov = (-42.,42.), 
-                                       v_res = 0.42,
-                                       h_res = 0.33,
+                                       ver_fov = (-24.4, 15.),#(-24.9, 2.), 
+                                       hor_fov = (-130.,42.), 
+                                       v_res = 1,
+                                       h_res = 1,
                                        d_max = None):
     '''
     lidar: a numpy array of shape N*D, D>=3
@@ -397,6 +402,67 @@ def get_mean_std_tensor(depth_mean, height_mean, depth_var, height_var, input_sh
     return mean_tensor, std_tensor
 
 
+def tracklet_gt_to_box(filename, tracklet_idx, frame_number):
+    tracklet_gt = parse_xml(filename)[tracklet_idx]
+    h = tracklet_gt.size[2]
+    w = tracklet_gt.size[1]
+    l = tracklet_gt.size[0]
+    bbox = np.array([
+        [-l / 2, -l / 2, l / 2, l / 2, -l / 2, -l / 2, l / 2, l / 2],
+        [w / 2, -w / 2, -w / 2, w / 2, w / 2, -w / 2, -w / 2, w / 2],
+        [-h / 2, -h / 2, -h / 2, -h / 2, h / 2, h / 2, h / 2, h / 2],
+    ])
+    yaw = tracklet_gt.rots[frame_number][2]
+    rot_mat = np.array([
+        [np.cos(yaw), -np.sin(yaw), 0.0],
+        [np.sin(yaw), np.cos(yaw), 0.0],
+        [0.0, 0.0, 1.0]
+    ])
+    position = tracklet_gt.trans[frame_number]
+    oriented_bbox = np.dot(rot_mat, bbox) + np.tile(position, (8, 1)).T
+    gt_box = oriented_bbox.T
+    return gt_box
+
+
+def box_to_tracklet(box, frame_number):
+    lv2d = box[1][:2] - box[0][:2] # x,y component of l vector
+    l = np.linalg.norm(lv2d)
+    w = np.linalg.norm(box[3][:2] - box[0][:2])
+    h = box[4][2] - box[0][2]
+    center = (box[0] + box[6]) * 0.5
+    lv2dn = lv2d / l # normalize
+    yaw = 0
+    if lv2dn[0] < 0.0001:
+        yaw = math.pi if lv2dn[1] > 0 else -math.pi
+    else:
+        yaw = math.atan2(lv2dn[1], lv2dn[0])    
+    t = Tracklet('Car', l, w, h)
+    t.first_frame = frame_number
+    p = {'tx': center[0], 'ty': center[1], 'tz': center[2], 'rx': 0, 'ry': 0, 'rz': yaw}
+    t.poses.append(p)
+    return t
+
+
+def generate_tracklet(pred_model, input_folder, output_file, \
+                        cluster=True, seg_thres=0.5, cluster_dist=0.7, min_dist=1.5, neigbor_thres=3):
+    tracklet_list = TrackletCollection()
+    #boxes_list = []
+    
+    for nframe in range(648):
+        lidarfile = os.path.join(input_folder, 'lidar_' + str(nframe) + '.npy')
+        points = np.load(lidarfile)
+
+        _, boxes = predict_boxes(pred_model, points, cluster=cluster, \
+                                seg_thres=seg_thres, cluster_dist=cluster_dist, min_dist=min_dist, neigbor_thres=neigbor_thres)
+
+        print('Frame ' + str(nframe) + ': ' + str(len(boxes)) + ' boxes detected')
+        for nbox in range(len(boxes)):
+            tracklet = box_to_tracklet(boxes[nbox], nframe)
+            tracklet_list.tracklets.append(tracklet)
+        #boxes_list.append(boxes)
+    
+    tracklet_list.write_xml(output_file)
+    print('Exported tracklet to ' + output_file)
 
 
 # def viz_mayavi_with_labels(points, boxes, view_boxes = True, vals="distance"):
