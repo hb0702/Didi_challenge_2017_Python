@@ -320,77 +320,99 @@ def augmentation(offset, flip, lidar, gtboxes):
 	return out_lidar, out_gtboxes
 
 
-def predict_boxes(model,lidar, cluster = True, seg_thres=0.5, cluster_dist = 0.1, min_dist = 1.5, neigbor_thres = 3):
-	view =  cylindrical_projection_for_test(lidar)
-	cylindrical_view = view[:,:,[5,2]].reshape(1,64,256,2)
-	pred = model.predict(cylindrical_view)
-	pred = pred[0]
+def predict_boxes(model, lidar, 
+                   cluster=True, seg_thres=0.5, cluster_dist=0.1, min_dist=1.5, neigbor_thres=3,
+                   ver_fov=(-24.4, 15.), v_res=0.42,
+                   num_hor_seg=2, # only 2 or 4
+                  ):
+    hor_fov_arr = []
+    h_res = 0.0
+    if num_hor_seg == 2:
+        hor_fov_arr.append([-180.,0.])
+        hor_fov_arr.append([0.,180.])
+        h_res = 0.703125
+    elif num_hor_seg == 4:
+        hor_fov_arr.append([-180.,-90.])
+        hor_fov_arr.append([-90.,0.])
+        hor_fov_arr.append([0.,90.])
+        hor_fov_arr.append([90.,180.])
+        h_res = 0.3515625
+        
+    all_boxes = np.empty((0,8,3))
+    
+    for ns in range(num_hor_seg):
+        view =  cylindrical_projection_for_test(lidar, hor_fov=hor_fov_arr[ns], h_res=h_res,
+                                               ver_fov=ver_fov, v_res=v_res)
+        cylindrical_view = view[:,:,[5,2]].reshape(1,64,256,2)
+        pred = model.predict(cylindrical_view)
+        pred = pred[0]
+        pred = pred.reshape(-1,8)
+        view = view.reshape(-1,6)
+        thres_pred = pred[pred[:,0] > seg_thres]
+        thres_view = view[pred[:,0] > seg_thres]
+        
+        num_boxes = len(thres_pred)
+        boxes = np.zeros((num_boxes,8,3))
+        
+        for i in range(num_boxes):
+            boxes[i,0] = thres_view[i,:3] - rotation(thres_view[i,3],thres_pred[i,1:4])
+            boxes[i,6] = thres_view[i,:3] - rotation(thres_view[i,3],thres_pred[i,4:7])
 
+            boxes[i,2,:2] = boxes[i,6,:2]
+            boxes[i,2,2] = boxes[i,0,2]
 
-	pred = pred.reshape(-1,8)
-	view = view.reshape(-1,6)
-	thres_pred = pred[pred[:,0] > seg_thres]
-	thres_view = view[pred[:,0] > seg_thres]
+            phi = thres_pred[i,-1]
 
-	num_boxes = len(thres_pred)
-	box_dist = np.zeros((num_boxes, num_boxes))
+            z = boxes[i,2] - boxes[i,0]
+            boxes[i,1,0] = (np.cos(phi)*z[0] + np.sin(phi)*z[1])*np.cos(phi) + boxes[i,0,0]
+            boxes[i,1,1] = (-np.sin(phi)*z[0] + np.cos(phi)*z[1])*np.cos(phi) + boxes[i,0,1]
+            boxes[i,1,2] = boxes[i,0,2]
 
-	boxes = np.zeros((num_boxes,8,3))
-	for i in range(num_boxes):
-		boxes[i,0] = thres_view[i,:3] - rotation(thres_view[i,3],thres_pred[i,1:4])
-		boxes[i,6] = thres_view[i,:3] - rotation(thres_view[i,3],thres_pred[i,4:7])
+            boxes[i,3] = boxes[i,0] + boxes[i,2] - boxes[i,1]
+            boxes[i,4] = boxes[i,0] + boxes[i,6] - boxes[i,2]
+            boxes[i,5] = boxes[i,1] + boxes[i,4] - boxes[i,0]
+            boxes[i,7] = boxes[i,4] + boxes[i,6] - boxes[i,5]
+        
+        all_boxes = np.vstack((all_boxes, boxes))
 
-		boxes[i,2,:2] = boxes[i,6,:2]
-		boxes[i,2,2] = boxes[i,0,2]
+    if not cluster:
+        return all_boxes
+    
+    boxes_tmp = np.copy(all_boxes)
 
-		phi = thres_pred[i,-1]
+    flatteb_boxes = all_boxes.reshape(-1,24)
+    num_box_total = len(all_boxes)
+    box_dist = np.zeros((num_box_total, num_box_total))
+    for i in range(num_box_total):
+        box_dist[i] = np.sqrt(np.sum(np.square(flatteb_boxes[[i]] - flatteb_boxes), axis = 1))
 
-		z = boxes[i,2] - boxes[i,0]
-		boxes[i,1,0] = (np.cos(phi)*z[0] + np.sin(phi)*z[1])*np.cos(phi) + boxes[i,0,0]
-		boxes[i,1,1] = (-np.sin(phi)*z[0] + np.cos(phi)*z[1])*np.cos(phi) + boxes[i,0,1]
-		boxes[i,1,2] = boxes[i,0,2]
+    thres_box_dist = box_dist < cluster_dist
+    neighbor = np.sum(thres_box_dist, axis = 1)
+    
+    cluster_boxes = []
 
-		boxes[i,3] = boxes[i,0] + boxes[i,2] - boxes[i,1]
-		boxes[i,4] = boxes[i,0] + boxes[i,6] - boxes[i,2]
-		boxes[i,5] = boxes[i,1] + boxes[i,4] - boxes[i,0]
-		boxes[i,7] = boxes[i,4] + boxes[i,6] - boxes[i,5]
+    while len(neighbor)>0:
 
-	if not cluster:
-		return boxes
+        ind = np.argmax(neighbor)
 
-	all_boxes = np.copy(boxes)
+        if neighbor[ind] < neigbor_thres:
+            break
 
-	flatteb_boxes = boxes.reshape(-1,24)
-	for i in range(num_boxes):
-		box_dist[i] = np.sqrt(np.sum(np.square(flatteb_boxes[[i]] - flatteb_boxes), axis = 1))
+        cluster_boxes.append(boxes_tmp[ind])
 
-	cluster_boxes = []
-		
-	thres_box_dist = box_dist < cluster_dist
-	neighbor = np.sum(thres_box_dist, axis = 1)
+        remain_indx = box_dist[ind] > min_dist
 
-	while len(neighbor)>0:
-		
-		ind = np.argmax(neighbor)
-		
-		if neighbor[ind] < neigbor_thres:
-		    break
+        box_dist = box_dist[remain_indx]
+        box_dist = box_dist[:,remain_indx]
 
-		cluster_boxes.append(boxes[ind])
-		
-		remain_indx = box_dist[ind] > min_dist
-		
-		box_dist = box_dist[remain_indx]
-		box_dist = box_dist[:,remain_indx]
+        thres_box_dist = thres_box_dist[remain_indx]
+        thres_box_dist = thres_box_dist[:,remain_indx]
 
-		thres_box_dist = thres_box_dist[remain_indx]
-		thres_box_dist = thres_box_dist[:,remain_indx]
-		        
-		boxes = boxes[remain_indx]
-		
-		neighbor = np.sum(thres_box_dist, axis = 1)
-	
-	return all_boxes, np.array(cluster_boxes) 
+        boxes_tmp = boxes_tmp[remain_indx]
+
+        neighbor = np.sum(thres_box_dist, axis = 1)
+    
+    return all_boxes, np.array(cluster_boxes) 
 
 def get_mean_std_tensor(depth_mean, height_mean, depth_var, height_var, input_shape = (64,256,2)):
     mean_tensor = np.ones(input_shape)
@@ -451,26 +473,74 @@ def box_to_tracklet(box, frame_number, fixed_size=None, no_rotation=False): # fi
     t.poses.append(p)
     return t
 
+def merge_frame_tracklets(tracklets):
+    n = len(tracklets)
+    l = 0
+    w = 0
+    h = 0
+    rx = 0
+    ry = 0
+    rz = 0
+    tx = 0
+    ty = 0
+    tz = 0
+    for i in range(n):
+        t = tracklets[i]
+        l += t.l
+        w += t.w
+        h += t.h
+        p = t.poses[0]
+        rx += p['rx']
+        ry += p['ry']
+        rz += p['rz']
+        tx += p['tx']
+        ty += p['ty']
+        tz += p['tz']
+    l = l / n
+    w = w / n
+    h = h / n
+    rx = rx / n
+    ry = ry / n
+    rz = rz / n
+    tx = tx / n
+    ty = ty / n
+    tz = tz / n
+    tracklet = Tracklet('Car', l, w, h)
+    t.first_frame = tracklets[0].first_frame
+    pos = {'tx': tx, 'ty': ty, 'tz': tz, 'rx': rx, 'ry': ry, 'rz': rz}
+    tracklet.poses.append(pos)
+    return tracklet
 
 def generate_tracklet(pred_model, input_folder, output_file, 
-                        fixed_size=None, no_rotation=False, # fixed_size: [l, w, h]
-                        cluster=True, seg_thres=0.5, cluster_dist=0.7, min_dist=1.5, neigbor_thres=3):
+                      fixed_size=None, no_rotation=False, # fixed_size: [l, w, h]
+                      cluster=True, seg_thres=0.5, cluster_dist=0.1, min_dist=1.5, neigbor_thres=3,
+                      ver_fov=(-24.4, 15.), v_res=0.42,
+                      num_hor_seg=2, # only 2 or 4
+                      merge=True
+                     ):
     tracklet_list = TrackletCollection()
-    #boxes_list = []
     
     for nframe in range(648):
         lidarfile = os.path.join(input_folder, 'lidar_' + str(nframe) + '.npy')
         points = np.load(lidarfile)
-
+        
+        frame_tracklets = []
         _, boxes = predict_boxes(pred_model, points, \
                                 cluster=cluster, seg_thres=seg_thres, cluster_dist=cluster_dist, \
-                                min_dist=min_dist, neigbor_thres=neigbor_thres)
+                                min_dist=min_dist, neigbor_thres=neigbor_thres, \
+                                ver_fov=ver_fov, v_res=v_res, num_hor_seg=num_hor_seg)
 
         print('Frame ' + str(nframe) + ': ' + str(len(boxes)) + ' boxes detected')
+        
         for nbox in range(len(boxes)):
             tracklet = box_to_tracklet(boxes[nbox], nframe, fixed_size=fixed_size, no_rotation=no_rotation)
-            tracklet_list.tracklets.append(tracklet)
-        #boxes_list.append(boxes)
+            frame_tracklets.append(tracklet)
+        if len(frame_tracklets) > 0:
+            if merge:
+                merged_tracklet = merge_frame_tracklets(frame_tracklets)
+                tracklet_list.tracklets.append(merged_tracklet)
+            else:
+                tracklet_list.tracklets = tracklet_list.tracklets + frame_tracklets
     
     tracklet_list.write_xml(output_file)
     print('Exported tracklet to ' + output_file)
