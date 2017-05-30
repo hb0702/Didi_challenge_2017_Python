@@ -506,7 +506,7 @@ def merge_frame_tracklets(tracklets):
     ty = ty / n
     tz = tz / n
     tracklet = Tracklet('Car', l, w, h)
-    t.first_frame = tracklets[0].first_frame
+    tracklet.first_frame = tracklets[0].first_frame
     pos = {'tx': tx, 'ty': ty, 'tz': tz, 'rx': rx, 'ry': ry, 'rz': rz}
     tracklet.poses.append(pos)
     return tracklet
