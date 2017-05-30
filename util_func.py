@@ -184,8 +184,8 @@ def cylindrical_projection_for_test(lidar,
                                        #gt_box3d,
                                        ver_fov = (-24.4, 15.),#(-24.9, 2.), 
                                        hor_fov = (-130.,42.), 
-                                       v_res = 1,
-                                       h_res = 1,
+                                       v_res = 0.42,
+                                       h_res = 0.33,
                                        d_max = None):
     '''
     lidar: a numpy array of shape N*D, D>=3
