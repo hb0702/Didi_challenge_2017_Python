@@ -98,10 +98,10 @@ def in_which_box(point, boxes):
 
 def cylindrical_projection_for_training(lidar,
                                        gt_box3d,
-                                       ver_fov = (-24.4, 2.),#(-24.9, 2.), 
-                                       hor_fov = (-42.,42.), 
-                                       v_res = 0.42,
-                                       h_res = 0.33):
+                                       ver_fov = (-24.4, 5.),#(-24.9, 2.), 
+                                       hor_fov = (-130.,42.), 
+                                       v_res = 1,
+                                       h_res = 1):
     '''
     lidar: a numpy array of shape N*D, D>=3
     gt_box3d: Ground truth boxes of shape B*8*3 (B : number of boxes)
