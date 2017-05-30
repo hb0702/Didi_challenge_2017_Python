@@ -424,18 +424,27 @@ def tracklet_gt_to_box(filename, tracklet_idx, frame_number):
     return gt_box
 
 
-def box_to_tracklet(box, frame_number):
+def box_to_tracklet(box, frame_number, fixed_size=None, no_rotation=False): # fixed_size: [l, w, h]
     lv2d = box[1][:2] - box[0][:2] # x,y component of l vector
-    l = np.linalg.norm(lv2d)
-    w = np.linalg.norm(box[3][:2] - box[0][:2])
-    h = box[4][2] - box[0][2]
+    l = 0
+    w = 0
+    h = 0
+    if fixed_size is not None:
+        l = fixed_size[0]
+        w = fixed_size[1]
+        h = fixed_size[2]
+    else:
+        l = np.linalg.norm(lv2d)
+        w = np.linalg.norm(box[3][:2] - box[0][:2])
+        h = box[4][2] - box[0][2]
     center = (box[0] + box[6]) * 0.5
     lv2dn = lv2d / l # normalize
     yaw = 0
-    if lv2dn[0] < 0.0001:
-        yaw = math.pi if lv2dn[1] > 0 else -math.pi
-    else:
-        yaw = math.atan2(lv2dn[1], lv2dn[0])    
+    if no_rotation == False:
+        if lv2dn[0] < 0.0001:
+            yaw = math.pi if lv2dn[1] > 0 else -math.pi
+        else:
+            yaw = math.atan2(lv2dn[1], lv2dn[0])    
     t = Tracklet('Car', l, w, h)
     t.first_frame = frame_number
     p = {'tx': center[0], 'ty': center[1], 'tz': center[2], 'rx': 0, 'ry': 0, 'rz': yaw}
@@ -443,7 +452,8 @@ def box_to_tracklet(box, frame_number):
     return t
 
 
-def generate_tracklet(pred_model, input_folder, output_file, \
+def generate_tracklet(pred_model, input_folder, output_file, 
+                        fixed_size=None, no_rotation=False, # fixed_size: [l, w, h]
                         cluster=True, seg_thres=0.5, cluster_dist=0.7, min_dist=1.5, neigbor_thres=3):
     tracklet_list = TrackletCollection()
     #boxes_list = []
@@ -452,12 +462,13 @@ def generate_tracklet(pred_model, input_folder, output_file, \
         lidarfile = os.path.join(input_folder, 'lidar_' + str(nframe) + '.npy')
         points = np.load(lidarfile)
 
-        _, boxes = predict_boxes(pred_model, points, cluster=cluster, \
-                                seg_thres=seg_thres, cluster_dist=cluster_dist, min_dist=min_dist, neigbor_thres=neigbor_thres)
+        _, boxes = predict_boxes(pred_model, points, \
+                                cluster=cluster, seg_thres=seg_thres, cluster_dist=cluster_dist, \
+                                min_dist=min_dist, neigbor_thres=neigbor_thres)
 
         print('Frame ' + str(nframe) + ': ' + str(len(boxes)) + ' boxes detected')
         for nbox in range(len(boxes)):
-            tracklet = box_to_tracklet(boxes[nbox], nframe)
+            tracklet = box_to_tracklet(boxes[nbox], nframe, fixed_size=fixed_size, no_rotation=no_rotation)
             tracklet_list.tracklets.append(tracklet)
         #boxes_list.append(boxes)
     
