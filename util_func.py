@@ -468,7 +468,7 @@ def box_to_tracklet(box, frame_number, fixed_size=None, no_rotation=False): # fi
         else:
             yaw = math.atan2(lv2dn[1], lv2dn[0])    
     t = Tracklet('Car', l, w, h)
-    t.first_frame = frame_number
+    t.first_frame = frame_number - 19
     p = {'tx': center[0], 'ty': center[1], 'tz': center[2], 'rx': 0, 'ry': 0, 'rz': yaw}
     t.poses.append(p)
     return t
