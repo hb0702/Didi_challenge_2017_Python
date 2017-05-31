@@ -456,8 +456,8 @@ def box_to_tracklet(box, frame_number, fixed_size=None, no_rotation=False): # fi
         w = fixed_size[1]
         h = fixed_size[2]
     else:
-        l = np.linalg.norm(lv2d)
-        w = np.linalg.norm(box[3][:2] - box[0][:2])
+        l = np.linalg.norm(box[3][:2] - box[0][:2])
+        w = np.linalg.norm(lv2d)
         h = box[4][2] - box[0][2]
     center = (box[0] + box[6]) * 0.5
     lv2dn = lv2d / l # normalize
