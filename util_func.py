@@ -182,11 +182,10 @@ def cylindrical_projection_for_training(lidar,
 
 def cylindrical_projection_for_test(lidar,
                                        #gt_box3d,
-                                       ver_fov = (-24.4, 15.),#(-24.9, 2.), 
-                                       hor_fov = (-130.,42.), 
-                                       v_res = 1,
-                                       h_res = 1,
-                                       d_max = None):
+                                    ver_fov = (-24.4, 2.),#(-24.9, 2.), 
+                                    hor_fov = (-42.,42.), 
+                                    v_res = 0.42,
+                                    h_res = 0.33):
     '''
     lidar: a numpy array of shape N*D, D>=3
     ver_fov : angle range of vertical projection in degree

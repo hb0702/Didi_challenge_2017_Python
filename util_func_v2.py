@@ -6,10 +6,11 @@ import numpy as np
 
 
 def cylindrical_projection(lidar, 
-                           ver_fov = (-24.4, 2.),#(-24.9, 2.), 
-                           hor_fov = (-42.,42.), 
-                           v_res = 0.42,
-                           h_res = 0.33):
+                           ver_fov = (-24.4, 4.),#(-24.9, 2.), 
+                                       hor_fov = (-130.,42.), 
+                                       v_res = 1,
+                                       h_res = 1,
+                                       d_max = None):
     '''
     lidar: a numpy array of shape N*D, D>=3
     ver_fov : angle range of vertical projection in degree
