@@ -43,9 +43,3 @@ The function `predict_boxes()` in file `util_func.py`.
 `Output`:
 + `all_boxes`: all of boxes with segmentation probability >= 0.5
 + `cluster_boxes`: list of boxes after clustering
-
-
-
-### Todo
-1. Normalize the data before training
-2. Modify the loss function: add weights for two losses based on the statistics of training data
