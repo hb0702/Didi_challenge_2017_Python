@@ -23,7 +23,7 @@ The function `train_batch_generator()` creates a generator for training.
 The trained weight will be stored as `./saved_model/model.h5`.
 
 ### The model
-Please  refer to the paper `Vehicle Detection from 3D Lidar Using Fully Convolutional Network` for the detail.
+Please  refer to the paper [Vehicle Detection from 3D Lidar Using Fully Convolutional Network](https://arxiv.org/pdf/1608.07916.pdf) for the detail.
 
 The ideal of the model as follows:
 
