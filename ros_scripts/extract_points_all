@@ -1,0 +1,5 @@
+#! /bin/bash
+
+./extract_points_in_folder '/media/jaeil/7452B59752B55E94/car_training'
+./extract_points_in_folder '/media/jaeil/7452B59752B55E94/car_testing'
+./extract_points_in_folder '/media/jaeil/7452B59752B55E94/pedestrian'
