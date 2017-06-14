@@ -1,0 +1,17 @@
+#! /bin/bash
+filepath=$1
+
+func()
+{
+	for filename in $1/*; do 
+		if [ -d $filename ]; then
+			func $filename
+		elif [ -f $filename ]; then
+			if [[ $filename == *.bag ]]; then
+				sh extract_points.sh $filename
+			fi
+		fi
+	done
+}
+
+func $filepath
