@@ -104,16 +104,20 @@ def cylindrical_projection_for_training(lidar, gt_box3d, ver_fov=(-24.4, 2.), ho
     return : cylindrical projection (or panorama view) of lidar
     '''
 
+    ground_val= -1.27
+    max_dist=50
+    
     x = lidar[:, 0]
     y = lidar[:, 1]
     z = lidar[:, 2]
+    d = np.sqrt(np.square(x) + np.square(y))
     
-    ind = np.where(z>-1.27)
+    ind = np.where(np.logical_and(z>-ground_val,d<max_dist))
+    
     x=x[ind]
     y=y[ind]
     z=z[ind]
-    
-    d = np.sqrt(np.square(x) + np.square(y))
+    d=d[ind]
 
     theta = np.arctan2(-y, x)
     phi = -np.arctan2(z, d)
