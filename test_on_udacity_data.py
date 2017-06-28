@@ -46,6 +46,26 @@ def viz_mayavi_with_labels(points, boxes, view_boxes = True, vals="distance"):
     mayavi.mlab.show()
 
 
+def viz_mayavi_clustering_lidar(points, label):
+    x = points[:, 0]  # x position of point
+    y = points[:, 1]  # y position of point
+    z = points[:, 2]  # z position of pointfrom mpl_toolkits.mplot3d import Axes3D
+    
+    fig = mayavi.mlab.figure(bgcolor=(0, 0, 0), size=(640, 360))
+    mayavi.mlab.points3d(x, y, z,
+                         label,          # Values used for Color
+                         mode="point",
+                         colormap='spectral', # 'bone', 'copper', 'gnuplot'
+                         # color=(0, 1, 0),   # Used a fixed (r,g,b) instead
+                         figure=fig,
+                         )
+    
+        
+    mayavi.mlab.show()
+
+
+
+
 def cylindrical_projection_v2(lidar, 
                            ver_fov = (-24.4, 2.),#(-24.9, 2.), 
                            hor_fov = (-42.,42.), 
