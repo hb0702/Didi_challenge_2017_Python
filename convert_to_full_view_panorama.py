@@ -330,7 +330,6 @@ def fv_cylindrical_projection_for_test(lidar,
                                         ver_fov = (-22, 4.),#(-24.9, 2.), 
                                         v_res = 1.8,
                                         h_res = 1.13,
-                                        angle_offset = 5,
                                         clustering = True):
                                        
     '''
@@ -338,8 +337,7 @@ def fv_cylindrical_projection_for_test(lidar,
     ver_fov : angle range of vertical projection in degree
     v_res : vertical resolusion
     h_res : horizontal resolution
-    angle_offset : extend the horizontal view to 360 degree + 2*offset for data augementation    
-
+    
     return : (360 degree full view + 2*offset) cylindrical projection (or panorama view) of lidar
     '''
     if clustering:
@@ -368,8 +366,11 @@ def fv_cylindrical_projection_for_test(lidar,
     x_max = np.int16(np.ceil(360/h_res))
     y_max = np.int16(np.ceil((ver_fov[1] - ver_fov[0])/v_res))
     
-    
-   
+    view = np.zeros([y_max+1, x_max+1, 6],dtype=np.float32)
+    if len(lidar) == 0:
+        return view
+
+
     indices = np.logical_and( np.logical_and(x_view >= 0, x_view <= x_max), 
                           np.logical_and(y_view >= 0, y_view <= y_max)  )
     
@@ -384,22 +385,9 @@ def fv_cylindrical_projection_for_test(lidar,
     phi = phi[indices]
     coord = [[x[i],y[i],z[i],theta[i],phi[i],d[i]] for i in range(len(x))]
     
-    view = np.zeros([y_max+1, x_max+1, 6],dtype=np.float32)
     view[y_view,x_view] = coord
     
-    if angle_offset == 0:
-        return view
-    else:
-        pad = int(angle_offset*(x_max + 1)/360)
-
-        out = np.zeros([y_max+1, x_max+1+2*pad, 6],dtype=np.float32)
-
-        #middle = int((x_max+1)/2)
-        out[:,:pad,:] = view[:, -pad:,:]
-        out[:,pad:pad+x_max+1, :] = view
-        out[:, pad+x_max+1:x_max+1+2*pad, :] = view[:,:pad,:]
-        return out
-
+    return view
 # Can be deletted
 def list_of_paths(lidar_dir, gt_box_dir):
     '''
