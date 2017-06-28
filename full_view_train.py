@@ -129,19 +129,19 @@ if __name__ == '__main__':
 
 
 	#test on just two sample
-	list_of_view = ['./data/training_didi_data/car_train_edited/suburu_leading_front_left/view/view_281.npy',
-					'./data/training_didi_data/car_train_edited/cmax_following_long/view/view_6631.npy']
+	#list_of_view = ['./data/training_didi_data/car_train_edited/suburu_leading_front_left/view/view_281.npy',
+	#				'./data/training_didi_data/car_train_edited/cmax_following_long/view/view_6631.npy']
 
 
 	batch_size = 1
-	epochs = 2000
+	epochs = 100
 	augmentation = True
 	
 	num_frame = len(list_of_view)
 	steps_per_epoch = int(num_frame/batch_size)
 	
 	continue_training = False
-	#saved_model = './saved_model/model_May_29_378_76.h5'
+	saved_model = 'saved_model/fv_model_for_car_June_28_99.h5'
 
 	if not continue_training:
 		print('Initiate training')
@@ -161,7 +161,7 @@ if __name__ == '__main__':
 		model.compile(optimizer=opt, loss=my_loss)
 	
 
-	checkpointer = ModelCheckpoint('saved_model/fv_model_June_28_{epoch:02d}.h5')
+	checkpointer = ModelCheckpoint('saved_model/fv_model_for_car_June_28_{epoch:02d}.h5')
 	#logger = CSVLogger(filename='saved_model/model_May_29_450.csv')
 
 	print('Start training - batch_size : {0} - num_frame : {1} - steps_per_epoch : {2}'.format(batch_size,num_frame,steps_per_epoch))
