@@ -187,9 +187,9 @@ def cylindrical_projection_for_training(lidar, gt_box3d, ver_fov=(-24.4, 2.), ho
 ##########################################################################################
 ######     Clustering 
 ##########################################################################################
-def cluster(lidar, min_d = 2, min_z = -1.4, max_z = 0.5, max_xrange = 5,
-            max_yrange = 5, min_xrange = 0.5, min_yrange = 0.5,  
-            min_zrange = 0.2, min_points = 20, z_scale = 1.,eps = 0.8, min_samples = 3):
+def cluster(lidar, min_d = 2, min_z = -1.35, max_z = 0.5, max_xrange = 6,
+            max_yrange = 6, min_xrange = 0.5, min_yrange = 0.5,  
+            min_zrange = 0.2, min_points = 15, z_scale = 1.,eps = 0.8, min_samples = 1):
     '''
     min_z : remove points whose z <= min_z (ground removing)
     min_d : remove points within distance of min_d
@@ -201,7 +201,7 @@ def cluster(lidar, min_d = 2, min_z = -1.4, max_z = 0.5, max_xrange = 5,
 
     # remove ground points
     lidar = lidar[lidar[:,2]>= min_z]
-    # remove near points
+    # remove near points (can improve)
     d = np.sqrt(np.square(lidar[:,0]) + np.square(lidar[:,1]))
     lidar = lidar[d>=min_d]
     # scale z
