@@ -133,7 +133,7 @@ if __name__ == '__main__':
 
 
 
-	car_dir = './data/training_didi_data/car_cluster_1_1/'
+	car_dir = './data/training_didi_data/car_cluster/'
 	not_car_dir =  './data/training_didi_data/not_car_cluster/'
 	gtbox_dir = './data/training_didi_data/car_train_gt_box_edited/'
 
@@ -153,14 +153,15 @@ if __name__ == '__main__':
 
 
 	batch_size = 64
-	epochs = 200
-	augmentation = True
+	epochs = 100
+	augmentation = False
 	
 	num_frame = 2*len(list_of_cars)
 	steps_per_epoch = int(num_frame/batch_size)
 	
-	continue_training = False
-	saved_model = 'saved_model/test_cluster.h5'
+	continue_training = True
+	#saved_model = 'saved_model/last_model.h5'
+	saved_model = 'saved_model/model_for_car_classifier_30_June_10_199.h5'
 
 	if not continue_training:
 		print('Initiate training')
@@ -180,7 +181,7 @@ if __name__ == '__main__':
 		model.compile(optimizer=opt, loss=my_loss)
 	
 
-	checkpointer = ModelCheckpoint('saved_model/model_for_car_classifier_30_June_10_{epoch:02d}.h5')
+	checkpointer = ModelCheckpoint('saved_model/model_for_car_classifier_200_{epoch:02d}.h5')
 	#logger = CSVLogger(filename='saved_model/model_May_29_450.csv')
 
 	print('Start training - batch_size : {0} - num_frame : {1} - steps_per_epoch : {2}'.format(batch_size,num_frame,steps_per_epoch))
@@ -192,5 +193,5 @@ if __name__ == '__main__':
                        callbacks=[checkpointer])#, logger])
 
 	print('End training - during time: {0} minutes'.format( int((time.time() - start)/60) ))
-	#model.save("saved_model/test_cluster.h5")
+	model.save("saved_model/last_model.h5")
 

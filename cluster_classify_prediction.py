@@ -3,6 +3,7 @@ import tensorflow as tf
 import keras
 from keras.models import load_model
 import os
+import time
 
 from sklearn.cluster import DBSCAN
 
@@ -21,6 +22,8 @@ def predict(model,lidar, thresh=0.5):
     lidar, labels = cluster(lidar)
     list_clusters = list(set(labels))
     nb_clusters = len(list_clusters)
+    if nb_clusters == 0:
+    	return np.array([])
     
     list_of_cluster = np.array([lidar[labels == list_clusters[i]] for i in range(nb_clusters)] )
     
@@ -33,21 +36,53 @@ def predict(model,lidar, thresh=0.5):
         centers[i] = center
 
     features = model.predict(imgs)
-    thresh_features = features[features[:,0] >= thresh]
-    centers = centers[features[:,0] >= thresh]
-    boxes = np.array([gt_box_decode(features[i], centers[i], z_min = -1.5) for i in range(len(features)) ])
+    #print('features.shape: ', features.shape)
+    features_thresh = features[features[:,0] >= thresh]
+    centers_thresh = centers[features[:,0] >= thresh]
+    
+    boxes = np.array([gt_box_decode(features_thresh[i], centers_thresh[i], z_min = -1.5) for i in range(len(features_thresh)) ])
     
     return boxes
 
+def predict_test_set(model, test_dir, pred_dir):
+
+	if not os.path.exists(pred_dir):
+		os.mkdir(pred_dir)
+	
+	print('start predicting ....')
+	start =  time.time()
+	nb = 0
+	for bag in os.listdir(test_dir):
+		bag_dir = os.path.join(test_dir, bag)
+		
+		pred_bag_dir = os.path.join(pred_dir, bag)
+		if not os.path.exists(pred_bag_dir):
+			os.mkdir(pred_bag_dir)
+
+		for f in os.listdir(bag_dir):
+			nb+=1
+			lidar_file = os.path.join(bag_dir, f)
+			lidar = np.load(lidar_file)
+
+			boxes = predict(model, lidar)
+			box_file = os.path.join(pred_bag_dir, f.replace('lidar', 'boxes') )
+
+			np.save(box_file, boxes)
+	print('End prediction. Number of frame: {0}. Total time: {1}. Time per frame {2}'.format(nb, int(time.time()-start), (time.time()-start)/nb))
+
+
 if __name__ == "__main__":
 	
-	lidar = np.load('./data/training_didi_data/car_train_edited/bmw_sitting_still/lidar/lidar_100.npy')
-	gtbox = np.load('./data/training_didi_data/car_train_gt_box_edited/bmw_sitting_still/gt_boxes3d/gt_boxes3d_100.npy')
-	viz_mayavi_with_labels(lidar, gtbox)
+	#lidar = np.load('./data/training_didi_data/car_train_edited/bmw_sitting_still/lidar/lidar_100.npy')
+	#gtbox = np.load('./data/training_didi_data/car_train_gt_box_edited/bmw_sitting_still/gt_boxes3d/gt_boxes3d_100.npy')
+	#viz_mayavi_with_labels(lidar, gtbox)
 
 
-	model = load_model('./saved_model/model_for_car_classifier_30_June_10_199.h5') 
-	boxes = predict(model, lidar)
+	model = load_model('./saved_model/last_model.h5') 
+	#boxes = predict(model, lidar)
 
-	viz_mayavi_with_labels(lidar, boxes)
+	#viz_mayavi_with_labels(lidar, boxes)
+	test_dir = './data/test_cars/'
+	pred_dir = './data/pred_box_cars/'
 
+	predict_test_set(model, test_dir, pred_dir)
