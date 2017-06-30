@@ -8,7 +8,7 @@ Y_RANGE = 6.4
 MIN_Z = -1.35
 MAX_Z = 0.5
 
-SCALE = 0.1
+SCALE = 1.2
 
 def scale_to_255(a, min, max, dtype=np.uint8):
     """ Scales an array of values from specified min, max range to 0-255
@@ -300,7 +300,7 @@ def create_car_training(lidar_dir, gtbox_dir, car_dir, not_car_dir):
         #print(list_lidar_files)
         
         print('Begin converting {0} lidar files in folder {1}'.format(len(list_lidar_files), folder))
-        
+        nb = 0
         for file in list_lidar_files:
             # load lidar frame and gt_box
             lidar_file = os.path.join(lidar_folder,file)
@@ -312,6 +312,7 @@ def create_car_training(lidar_dir, gtbox_dir, car_dir, not_car_dir):
             n_near_clusters, list_near_cluter, list_far_cluster = is_good_label(lidar, gt_box)
             
             if n_near_clusters == 1:
+                nb += 1
                 car_file = os.path.join(car_folder, file.replace('lidar', 'car') )
                 np.save(car_file, list_near_cluter[0])
                 log_cars.write(car_file + '\n')
@@ -320,8 +321,8 @@ def create_car_training(lidar_dir, gtbox_dir, car_dir, not_car_dir):
                         not_car_file = os.path.join(not_car_folder, file.replace('lidar', 'not_car_' + str(i)) )
                         np.save(not_car_file, list_far_cluster[i])
                         log_not_cars.write(not_car_file + '\n')
-        print('End converting {0} folder {1}. Time: {2}. Time per frame: {3}'.format(
-                len(list_lidar_files), folder, time.time()-sub_time , (time.time()-sub_time)/len(list_lidar_files)))
+        print('End converting {0} folder {1}. Nb saved file: {4}. Time: {2}. Time per frame: {3}'.format(
+                len(list_lidar_files), folder, time.time()-sub_time , (time.time()-sub_time)/len(list_lidar_files), nb))
     log_not_cars.close()
     log_cars.close()
     print('Done creating training data. Total time: ', time.time() - start)
@@ -385,10 +386,10 @@ def create_good_car_training(car_dir, not_car_dir, gtbox_dir, scale = 1.2):
 
 if __name__ == '__main__':
 
-    car_dir = './data/training_didi_data/car_cluster_1_1/'
+    car_dir = './data/training_didi_data/car_cluster/'
     not_car_dir =  './data/training_didi_data/not_car_cluster/'
     gtbox_dir = './data/training_didi_data/car_train_gt_box_edited/'
-    
+    lidar_dir = './data/training_didi_data/car_train_edited/'
     
     create_car_training(lidar_dir, gtbox_dir, car_dir, not_car_dir)
 
