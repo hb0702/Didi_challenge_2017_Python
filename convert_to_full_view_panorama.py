@@ -341,10 +341,11 @@ def fv_cylindrical_projection_for_test(lidar,
     return : (360 degree full view + 2*offset) cylindrical projection (or panorama view) of lidar
     '''
     if clustering:
-        lidar, _ = cluster(lidar)
+        lidar, labels = cluster(lidar)
     else:
          # remove ground points
-        lidar = lidar[lidar[:,2]>= -1.4]
+        lidar = lidar[lidar[:,2]>= -1.35]
+        labels = []
 
     x = lidar[:,0]
     y = lidar[:,1]
@@ -387,7 +388,7 @@ def fv_cylindrical_projection_for_test(lidar,
     
     view[y_view,x_view] = coord
     
-    return view
+    return view, lidar, labels
 # Can be deletted
 def list_of_paths(lidar_dir, gt_box_dir):
     '''
