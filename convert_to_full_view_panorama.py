@@ -369,7 +369,7 @@ def fv_cylindrical_projection_for_test(lidar,
     
     view = np.zeros([y_max+1, x_max+1, 6],dtype=np.float32)
     if len(lidar) == 0:
-        return view
+        return view, lidar, labels
 
 
     indices = np.logical_and( np.logical_and(x_view >= 0, x_view <= x_max), 
