@@ -138,7 +138,8 @@ def parseXML(trackletFile, findCarOnly):
         if isFinished:
           raise ValueError('more info on element after finished!')
         if info.tag == 'objectType':
-          newTrack.objectType=info.text
+          #print info.text
+          newTrack.objectType = info.text
         elif info.tag == 'h':
           newTrack.size[0] = float(info.text)
         elif info.tag == 'w':
@@ -219,6 +220,7 @@ def parseXML(trackletFile, findCarOnly):
           raise ValueError('unexpected tag in tracklets: {0}!'.format(info.tag))
       #end: for all fields in current tracklet
 
+
       # some final consistency checks on new tracklet
       if not isFinished:
         warn('tracklet {0} was not finished!'.format(trackletIdx))
@@ -230,20 +232,28 @@ def parseXML(trackletFile, findCarOnly):
       if np.abs(newTrack.rots[:,:2]).sum() > 1e-16:
         warn('track contains rotation other than yaw!')
 
+
+
       # if amtOccs / amtBorders are not set, set them to None
       if not hasAmt:
         newTrack.amtOccs = None
         newTrack.amtBorders = None
 
-      # add new tracklet to list
-      if findCarOnly:
-        if newTrack.objectType == 'Car':
+      if findCarOnly:# add new tracklet to list
+      	if newTrack.objectType == 'Car':
+      		tracklets.append(newTrack)
+      		trackletIdx += 1
+        elif newTrack.objectType == 'Truck':
             tracklets.append(newTrack)
-            trackletIdx += 1
-      elif:
-        tracklets.append(newTrack)
-        trackletIdx += 1
-          
+            trackletIdx += 1 
+        elif newTrack.objectType == 'Van':
+            tracklets.append(newTrack)
+            trackletIdx += 1 
+            
+      else:
+      	tracklets.append(newTrack)
+      	trackletIdx += 1
+
 
     else:
       raise ValueError('unexpected tracklet info')

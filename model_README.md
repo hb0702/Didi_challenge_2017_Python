@@ -23,7 +23,7 @@ The function `train_batch_generator()` creates a generator for training.
 The trained weight will be stored as `./saved_model/model.h5`.
 
 ### The model
-Please  refer to the paper `Vehicle Detection from 3D Lidar Using Fully Convolutional Network` for the detail.
+Please  refer to the paper [Vehicle Detection from 3D Lidar Using Fully Convolutional Network](https://arxiv.org/pdf/1608.07916.pdf) for the detail.
 
 The ideal of the model as follows:
 
@@ -43,9 +43,3 @@ The function `predict_boxes()` in file `util_func.py`.
 `Output`:
 + `all_boxes`: all of boxes with segmentation probability >= 0.5
 + `cluster_boxes`: list of boxes after clustering
-
-
-
-### Todo
-1. Normalize the data before training
-2. Modify the loss function: add weights for two losses based on the statistics of training data

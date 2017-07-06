@@ -1,8 +1,13 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import mayavi.mlab
-from mpl_toolkits.mplot3d import Axes3D
-
+import math
+import os
+from tracklet import Tracklet
+from tracklet import TrackletCollection
+from tracklet import TrackletGT
+from tracklet import parse_xml
+#import matplotlib.pyplot as plt
+#import mayavi.mlab
+#from mpl_toolkits.mplot3d import Axes3D
 
 
 def cylindrical_projection(lidar, 
@@ -177,11 +182,24 @@ def cylindrical_projection_for_training(lidar,
 
 def cylindrical_projection_for_test(lidar,
                                        #gt_box3d,
-                                       ver_fov = (-24.4, 2.),#(-24.9, 2.), 
-                                       hor_fov = (-42.,42.), 
+<<<<<<< HEAD
+                                    ver_fov = (-24.4, 2.),#(-24.9, 2.), 
+                                    hor_fov = (-42.,42.), 
+                                    v_res = 0.42,
+                                    h_res = 0.33):
+||||||| merged common ancestors
+                                       ver_fov = (-24.4, 15.),#(-24.9, 2.), 
+                                       hor_fov = (-130.,42.), 
+                                       v_res = 1,
+                                       h_res = 1,
+                                       d_max = None):
+=======
+                                       ver_fov = (-24.4, 15.),#(-24.9, 2.), 
+                                       hor_fov = (-130.,42.), 
                                        v_res = 0.42,
                                        h_res = 0.33,
                                        d_max = None):
+>>>>>>> e8d53df5d4bd876618ecf8b0bd7c7e833035214b
     '''
     lidar: a numpy array of shape N*D, D>=3
     ver_fov : angle range of vertical projection in degree
@@ -300,33 +318,6 @@ def augmentation(offset, flip, lidar, gtboxes):
 		out_gtboxes[:,:,0] = u*gtboxes[:,:,0] + v*gtboxes[:,:,1]
 		out_gtboxes[:,:,1] = v*gtboxes[:,:,0] - u*gtboxes[:,:,1]
 
-
-	else:
-
-		out_lidar[:,0] = u*lidar[:,0] + v*lidar[:,1]
-		out_lidar[:,1] = -v*lidar[:,0] + u*lidar[:,1]
-
-		out_gtboxes[:,:,0] = u*gtboxes[:,:,0] + v*gtboxes[:,:,1]
-		out_gtboxes[:,:,1] = -v*gtboxes[:,:,0] + u*gtboxes[:,:,1]
-
-
-	return out_lidar, out_gtboxes
-
-def augmentation_2(offset, flip, lidar, gtboxes):
-	u = np.cos(offset)
-	v = np.sin(offset)
-
-	out_lidar = np.copy(lidar)
-	out_gtboxes = np.copy(gtboxes)
-
-	if flip == 1:
-		
-		out_lidar[:,0] = u*lidar[:,0] + v*lidar[:,1]
-		out_lidar[:,1] = v*lidar[:,0] - u*lidar[:,1]
-
-		out_gtboxes[:,:,0] = u*gtboxes[:,:,0] + v*gtboxes[:,:,1]
-		out_gtboxes[:,:,1] = v*gtboxes[:,:,0] - u*gtboxes[:,:,1]
-
 		out_gtboxes = out_gtboxes[:,[0,3,2,1,4,7,6,5],:]
 
 
@@ -342,122 +333,274 @@ def augmentation_2(offset, flip, lidar, gtboxes):
 	return out_lidar, out_gtboxes
 
 
-def predict_boxes(model,lidar, cluster = True, seg_thres=0.5, cluster_dist = 0.1, min_dist = 1.5, neigbor_thres = 3):
-	view =  cylindrical_projection_for_test(lidar)
-	cylindrical_view = view[:,:,[5,2]].reshape(1,64,256,2)
-	pred = model.predict(cylindrical_view)
-	pred = pred[0]
-
-
-	pred = pred.reshape(-1,8)
-	view = view.reshape(-1,6)
-	thres_pred = pred[pred[:,0] > seg_thres]
-	thres_view = view[pred[:,0] > seg_thres]
-
-	num_boxes = len(thres_pred)
-	box_dist = np.zeros((num_boxes, num_boxes))
-
-	boxes = np.zeros((num_boxes,8,3))
-	for i in range(num_boxes):
-		boxes[i,0] = thres_view[i,:3] - rotation(thres_view[i,3],thres_pred[i,1:4])
-		boxes[i,6] = thres_view[i,:3] - rotation(thres_view[i,3],thres_pred[i,4:7])
-
-		boxes[i,2,:2] = boxes[i,6,:2]
-		boxes[i,2,2] = boxes[i,0,2]
-
-		phi = thres_pred[i,-1]
-
-		z = boxes[i,2] - boxes[i,0]
-		boxes[i,1,0] = (np.cos(phi)*z[0] + np.sin(phi)*z[1])*np.cos(phi) + boxes[i,0,0]
-		boxes[i,1,1] = (-np.sin(phi)*z[0] + np.cos(phi)*z[1])*np.cos(phi) + boxes[i,0,1]
-		boxes[i,1,2] = boxes[i,0,2]
-
-		boxes[i,3] = boxes[i,0] + boxes[i,2] - boxes[i,1]
-		boxes[i,4] = boxes[i,0] + boxes[i,6] - boxes[i,2]
-		boxes[i,5] = boxes[i,1] + boxes[i,4] - boxes[i,0]
-		boxes[i,7] = boxes[i,4] + boxes[i,6] - boxes[i,5]
-
-	if not cluster:
-		return boxes
-
-	all_boxes = np.copy(boxes)
-
-	flatteb_boxes = boxes.reshape(-1,24)
-	for i in range(num_boxes):
-		box_dist[i] = np.sqrt(np.sum(np.square(flatteb_boxes[[i]] - flatteb_boxes), axis = 1))
-
-	cluster_boxes = []
-		
-	thres_box_dist = box_dist < cluster_dist
-	neighbor = np.sum(thres_box_dist, axis = 1)
-
-	while len(neighbor)>0:
-		
-		ind = np.argmax(neighbor)
-		
-		if neighbor[ind] < neigbor_thres:
-		    break
-
-		cluster_boxes.append(boxes[ind])
-		
-		remain_indx = box_dist[ind] > min_dist
-		
-		box_dist = box_dist[remain_indx]
-		box_dist = box_dist[:,remain_indx]
-
-		thres_box_dist = thres_box_dist[remain_indx]
-		thres_box_dist = thres_box_dist[:,remain_indx]
-		        
-		boxes = boxes[remain_indx]
-		
-		neighbor = np.sum(thres_box_dist, axis = 1)
-	
-	return all_boxes, np.array(cluster_boxes) 
-
-
-
-def viz_mayavi_with_labels(points, boxes, view_boxes = True, vals="distance"):
-    x = points[:, 0]  # x position of point
-    y = points[:, 1]  # y position of point
-    z = points[:, 2]  # z position of pointfrom mpl_toolkits.mplot3d import Axes3D
-    # r = lidar[:, 3]  # reflectance value of point
-    d = np.sqrt(x ** 2 + y ** 2)  # Map Distance from sensor
-
-    # Plot using mayavi -Much faster and smoother than matplotlib
-    #import mayavi.mlab
-    if vals == "height":
-        col = z
-    else:
-        col = d
-
-    fig = mayavi.mlab.figure(bgcolor=(0, 0, 0), size=(640, 360))
-    mayavi.mlab.points3d(x, y, z,
-                         col,          # Values used for Color
-                         mode="point",
-                         colormap='spectral', # 'bone', 'copper', 'gnuplot'
-                         # color=(0, 1, 0),   # Used a fixed (r,g,b) instead
-                         figure=fig,
-                         )
-    
-    if view_boxes:
-        for i in range(len(boxes)):
-            car = boxes[i]
-            x = car[:,0]
-            y = car[:,1]
-            z = car[:,2]
-
-            mayavi.mlab.plot3d(x[:4], y[:4], z[:4], tube_radius=0.025)#, colormap='Spectral')
-            mayavi.mlab.plot3d(x[[0,3]], y[[0,3]], z[[0,3]], tube_radius=0.025)
-            mayavi.mlab.plot3d(x[[0,4]], y[[0,4]], z[[0,4]], tube_radius=0.025)
-            mayavi.mlab.plot3d(x[[1,5]], y[[1,5]], z[[1,5]], tube_radius=0.025)
-            mayavi.mlab.plot3d(x[[2,6]], y[[2,6]], z[[2,6]], tube_radius=0.025)
-            mayavi.mlab.plot3d(x[[3,7]], y[[3,7]], z[[3,7]], tube_radius=0.025)
-
-
-            mayavi.mlab.plot3d(x[-4:], y[-4:], z[-4:], tube_radius=0.025)#, colormap='Spectral')
-            mayavi.mlab.plot3d(x[[4,7]], y[[4,7]], z[[4,7]], tube_radius=0.025)
+def predict_boxes(model, lidar, 
+                   cluster=True, seg_thres=0.5, cluster_dist=0.1, min_dist=1.5, neigbor_thres=3,
+                   ver_fov=(-24.4, 15.), v_res=0.42,
+                   num_hor_seg=2, # only 2 or 4
+                  ):
+    hor_fov_arr = []
+    h_res = 0.0
+    if num_hor_seg == 2:
+        hor_fov_arr.append([-180.,0.])
+        hor_fov_arr.append([0.,180.])
+        h_res = 0.703125
+    elif num_hor_seg == 4:
+        hor_fov_arr.append([-180.,-90.])
+        hor_fov_arr.append([-90.,0.])
+        hor_fov_arr.append([0.,90.])
+        hor_fov_arr.append([90.,180.])
+        h_res = 0.3515625
         
-    mayavi.mlab.show()
+    all_boxes = np.empty((0,8,3))
+    
+    for ns in range(num_hor_seg):
+        view =  cylindrical_projection_for_test(lidar, hor_fov=hor_fov_arr[ns], h_res=h_res,
+                                               ver_fov=ver_fov, v_res=v_res)
+        cylindrical_view = view[:,:,[5,2]].reshape(1,64,256,2)
+        pred = model.predict(cylindrical_view)
+        pred = pred[0]
+        pred = pred.reshape(-1,8)
+        view = view.reshape(-1,6)
+        thres_pred = pred[pred[:,0] > seg_thres]
+        thres_view = view[pred[:,0] > seg_thres]
+        
+        num_boxes = len(thres_pred)
+        boxes = np.zeros((num_boxes,8,3))
+        
+        for i in range(num_boxes):
+            boxes[i,0] = thres_view[i,:3] - rotation(thres_view[i,3],thres_pred[i,1:4])
+            boxes[i,6] = thres_view[i,:3] - rotation(thres_view[i,3],thres_pred[i,4:7])
+
+            boxes[i,2,:2] = boxes[i,6,:2]
+            boxes[i,2,2] = boxes[i,0,2]
+
+            phi = thres_pred[i,-1]
+
+            z = boxes[i,2] - boxes[i,0]
+            boxes[i,1,0] = (np.cos(phi)*z[0] + np.sin(phi)*z[1])*np.cos(phi) + boxes[i,0,0]
+            boxes[i,1,1] = (-np.sin(phi)*z[0] + np.cos(phi)*z[1])*np.cos(phi) + boxes[i,0,1]
+            boxes[i,1,2] = boxes[i,0,2]
+
+            boxes[i,3] = boxes[i,0] + boxes[i,2] - boxes[i,1]
+            boxes[i,4] = boxes[i,0] + boxes[i,6] - boxes[i,2]
+            boxes[i,5] = boxes[i,1] + boxes[i,4] - boxes[i,0]
+            boxes[i,7] = boxes[i,4] + boxes[i,6] - boxes[i,5]
+        
+        all_boxes = np.vstack((all_boxes, boxes))
+
+    if not cluster:
+        return all_boxes
+    
+    boxes_tmp = np.copy(all_boxes)
+
+    flatteb_boxes = all_boxes.reshape(-1,24)
+    num_box_total = len(all_boxes)
+    box_dist = np.zeros((num_box_total, num_box_total))
+    for i in range(num_box_total):
+        box_dist[i] = np.sqrt(np.sum(np.square(flatteb_boxes[[i]] - flatteb_boxes), axis = 1))
+
+    thres_box_dist = box_dist < cluster_dist
+    neighbor = np.sum(thres_box_dist, axis = 1)
+    
+    cluster_boxes = []
+
+    while len(neighbor)>0:
+
+        ind = np.argmax(neighbor)
+
+        if neighbor[ind] < neigbor_thres:
+            break
+
+        cluster_boxes.append(boxes_tmp[ind])
+
+        remain_indx = box_dist[ind] > min_dist
+
+        box_dist = box_dist[remain_indx]
+        box_dist = box_dist[:,remain_indx]
+
+        thres_box_dist = thres_box_dist[remain_indx]
+        thres_box_dist = thres_box_dist[:,remain_indx]
+
+        boxes_tmp = boxes_tmp[remain_indx]
+
+        neighbor = np.sum(thres_box_dist, axis = 1)
+    
+    return all_boxes, np.array(cluster_boxes) 
+
+def get_mean_std_tensor(depth_mean, height_mean, depth_var, height_var, input_shape = (64,256,2)):
+    mean_tensor = np.ones(input_shape)
+    std_tensor = np.ones(input_shape)
+    mean_tensor[:,:,0]*= depth_mean
+    mean_tensor[:,:,1]*= height_mean
+    std_tensor[:,:,0]*= np.sqrt(depth_var)
+    std_tensor[:,:,1]*= np.sqrt(height_var)
+    return mean_tensor, std_tensor
+
+
+def tracklet_gt_to_box(filename, tracklet_idx, frame_number):
+    tracklet_gt = parse_xml(filename)[tracklet_idx]
+    h = tracklet_gt.size[2]
+    w = tracklet_gt.size[1]
+    l = tracklet_gt.size[0]
+    bbox = np.array([
+        [-l / 2, -l / 2, l / 2, l / 2, -l / 2, -l / 2, l / 2, l / 2],
+        [w / 2, -w / 2, -w / 2, w / 2, w / 2, -w / 2, -w / 2, w / 2],
+        [-h / 2, -h / 2, -h / 2, -h / 2, h / 2, h / 2, h / 2, h / 2],
+    ])
+    yaw = tracklet_gt.rots[frame_number][2]
+    rot_mat = np.array([
+        [np.cos(yaw), -np.sin(yaw), 0.0],
+        [np.sin(yaw), np.cos(yaw), 0.0],
+        [0.0, 0.0, 1.0]
+    ])
+    position = tracklet_gt.trans[frame_number]
+    oriented_bbox = np.dot(rot_mat, bbox) + np.tile(position, (8, 1)).T
+    gt_box = oriented_bbox.T
+    return gt_box
+
+
+def box_to_tracklet(box, frame_number, fixed_size=None, no_rotation=False): # fixed_size: [l, w, h]
+    lv2d = box[1][:2] - box[0][:2] # x,y component of l vector
+    l = 0
+    w = 0
+    h = 0
+    if fixed_size is not None:
+        l = fixed_size[0]
+        w = fixed_size[1]
+        h = fixed_size[2]
+    else:
+        l = np.linalg.norm(box[3][:2] - box[0][:2])
+        w = np.linalg.norm(lv2d)
+        h = box[4][2] - box[0][2]
+    center = (box[0] + box[6]) * 0.5
+    lv2dn = lv2d / l # normalize
+    yaw = 0
+    if no_rotation == False:
+        if lv2dn[0] < 0.0001:
+            yaw = math.pi if lv2dn[1] > 0 else -math.pi
+        else:
+            yaw = math.atan2(lv2dn[1], lv2dn[0])    
+    t = Tracklet('Car', l, w, h)
+    t.first_frame = frame_number - 19
+    p = {'tx': center[0], 'ty': center[1], 'tz': center[2], 'rx': 0, 'ry': 0, 'rz': yaw}
+    t.poses.append(p)
+    return t
+
+def merge_frame_tracklets(tracklets):
+    n = len(tracklets)
+    l = 0
+    w = 0
+    h = 0
+    rx = 0
+    ry = 0
+    rz = 0
+    tx = 0
+    ty = 0
+    tz = 0
+    for i in range(n):
+        t = tracklets[i]
+        l += t.l
+        w += t.w
+        h += t.h
+        p = t.poses[0]
+        rx += p['rx']
+        ry += p['ry']
+        rz += p['rz']
+        tx += p['tx']
+        ty += p['ty']
+        tz += p['tz']
+    l = l / n
+    w = w / n
+    h = h / n
+    rx = rx / n
+    ry = ry / n
+    rz = rz / n
+    tx = tx / n
+    ty = ty / n
+    tz = tz / n
+    tracklet = Tracklet('Car', l, w, h)
+    tracklet.first_frame = tracklets[0].first_frame
+    pos = {'tx': tx, 'ty': ty, 'tz': tz, 'rx': rx, 'ry': ry, 'rz': rz}
+    tracklet.poses.append(pos)
+    return tracklet
+
+def generate_tracklet(pred_model, input_folder, output_file, 
+                      fixed_size=None, no_rotation=False, # fixed_size: [l, w, h]
+                      cluster=True, seg_thres=0.5, cluster_dist=0.1, min_dist=1.5, neigbor_thres=3,
+                      ver_fov=(-24.4, 15.), v_res=0.42,
+                      num_hor_seg=2, # only 2 or 4
+                      merge=True
+                     ):
+    tracklet_list = TrackletCollection()
+    
+    for nframe in range(648):
+        lidarfile = os.path.join(input_folder, 'lidar_' + str(nframe) + '.npy')
+        points = np.load(lidarfile)
+        
+        frame_tracklets = []
+        _, boxes = predict_boxes(pred_model, points, \
+                                cluster=cluster, seg_thres=seg_thres, cluster_dist=cluster_dist, \
+                                min_dist=min_dist, neigbor_thres=neigbor_thres, \
+                                ver_fov=ver_fov, v_res=v_res, num_hor_seg=num_hor_seg)
+
+        print('Frame ' + str(nframe) + ': ' + str(len(boxes)) + ' boxes detected')
+        
+        for nbox in range(len(boxes)):
+            tracklet = box_to_tracklet(boxes[nbox], nframe, fixed_size=fixed_size, no_rotation=no_rotation)
+            frame_tracklets.append(tracklet)
+        if len(frame_tracklets) > 0:
+            if merge:
+                merged_tracklet = merge_frame_tracklets(frame_tracklets)
+                tracklet_list.tracklets.append(merged_tracklet)
+            else:
+                tracklet_list.tracklets = tracklet_list.tracklets + frame_tracklets
+    
+    tracklet_list.write_xml(output_file)
+    print('Exported tracklet to ' + output_file)
+
+
+# def viz_mayavi_with_labels(points, boxes, view_boxes = True, vals="distance"):
+#     x = points[:, 0]  # x position of point
+#     y = points[:, 1]  # y position of point
+#     z = points[:, 2]  # z position of pointfrom mpl_toolkits.mplot3d import Axes3D
+#     # r = lidar[:, 3]  # reflectance value of point
+#     d = np.sqrt(x ** 2 + y ** 2)  # Map Distance from sensor
+
+#     # Plot using mayavi -Much faster and smoother than matplotlib
+#     #import mayavi.mlab
+#     if vals == "height":
+#         col = z
+#     else:
+#         col = d
+
+#     fig = mayavi.mlab.figure(bgcolor=(0, 0, 0), size=(640, 360))
+#     mayavi.mlab.points3d(x, y, z,
+#                          col,          # Values used for Color
+#                          mode="point",
+#                          colormap='spectral', # 'bone', 'copper', 'gnuplot'
+#                          # color=(0, 1, 0),   # Used a fixed (r,g,b) instead
+#                          figure=fig,
+#                          )
+    
+#     if view_boxes:
+#         for i in range(len(boxes)):
+#             car = boxes[i]
+#             x = car[:,0]
+#             y = car[:,1]
+#             z = car[:,2]
+
+#             mayavi.mlab.plot3d(x[:4], y[:4], z[:4], tube_radius=0.025)#, colormap='Spectral')
+#             mayavi.mlab.plot3d(x[[0,3]], y[[0,3]], z[[0,3]], tube_radius=0.025)
+#             mayavi.mlab.plot3d(x[[0,4]], y[[0,4]], z[[0,4]], tube_radius=0.025)
+#             mayavi.mlab.plot3d(x[[1,5]], y[[1,5]], z[[1,5]], tube_radius=0.025)
+#             mayavi.mlab.plot3d(x[[2,6]], y[[2,6]], z[[2,6]], tube_radius=0.025)
+#             mayavi.mlab.plot3d(x[[3,7]], y[[3,7]], z[[3,7]], tube_radius=0.025)
+
+
+#             mayavi.mlab.plot3d(x[-4:], y[-4:], z[-4:], tube_radius=0.025)#, colormap='Spectral')
+#             mayavi.mlab.plot3d(x[[4,7]], y[[4,7]], z[[4,7]], tube_radius=0.025)
+        
+#     mayavi.mlab.show()
 
 
 if __name__ == '__main__':
