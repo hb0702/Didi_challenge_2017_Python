@@ -23,3 +23,5 @@ The flow of our code is follwing
 
 
 ##### 4. Generate_tracklet.ipynb : The model weight that was produced in train.py was used to predict the location of cars in lidar coordinate. This then was turned into the tracklet xml format for the submission.
+
+# Team Korea Officially finshed 10th out of 2000 intial international teams.
